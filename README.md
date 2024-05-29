@@ -58,7 +58,7 @@ Most other things are ready for testing.
 |:------------|:-----------|:-------------|
 | Start a repl (default) | `cljr [clj-opts] [-Aaliases]` |  Yes |
 | Execute a function (-X) | `cljr [clj-opts] -Xaliases my/fn? [kpath v ... ] kv-map? `| Yes |
-| Run a tool (-T)  | `cljr [clj-opts] -T[name|aliases] my/fn [kpath v ...] kv-map?` | Not yet |
+| Run a tool (-T)  | `cljr [clj-opts] -T[name\|aliases] my/fn [kpath v ...] kv-map?` | Not yet |
 | Run a main namespace or script (-M) | `cljr [clj-opts] -M[aliases] [init-opts] [main-opts] [args]` | Yes |
 
 The status of the options:
@@ -128,14 +128,13 @@ Here is a sample `deps.edn` file set up to use this port of `test-runner`:
  {:test
   {:extra-paths ["src/test/clojure"]
    :extra-deps {io.github.dmiller/test-runner {:git/tag "v0.5.1clr" :git/sha "814e06f"}}
-   ;; :main-opts ["-m" "cognitect.test-runner" "-d" "src/test/clojure"]
    :exec-fn cognitect.test-runner.api/test
    :exec-args {:dirs ["src/test/clojure"]}}}}
 ```
 
 You would invoke test running via
 
-```
+```Clojure
 cljr -X:test
 ```
 
