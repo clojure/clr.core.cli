@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34601.278
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cljr", "Cljr.csproj", "{3F0102A4-E6A0-4B58-9B98-534556E1EDCC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cljr.Tests", "..\Cljr.Tests\Cljr.Tests.csproj", "{C611CDA8-F619-4C8D-A31F-7EFD8E0E0020}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3F0102A4-E6A0-4B58-9B98-534556E1EDCC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F0102A4-E6A0-4B58-9B98-534556E1EDCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F0102A4-E6A0-4B58-9B98-534556E1EDCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F0102A4-E6A0-4B58-9B98-534556E1EDCC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C611CDA8-F619-4C8D-A31F-7EFD8E0E0020}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C611CDA8-F619-4C8D-A31F-7EFD8E0E0020}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C611CDA8-F619-4C8D-A31F-7EFD8E0E0020}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C611CDA8-F619-4C8D-A31F-7EFD8E0E0020}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C3DE4A57-4547-4F3F-B982-FCE746E7AD73}
+	EndGlobalSection
+EndGlobal

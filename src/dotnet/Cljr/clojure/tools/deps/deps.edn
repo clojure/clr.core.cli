@@ -1,0 +1,22 @@
+﻿{
+  :paths ["."]
+
+  ;;; eventually, we need to be able to declare the clojure version to use.
+  ;;;:deps {
+  ;;;  org.clojure/clojure {:mvn/version "${clojure.version}"}
+  ;;;}
+
+  :aliases {
+    :deps {:replace-paths []
+           :replace-deps {io.github.clojure/clr.tools.deps.cli {:git/tag "v0.1.2" :git/sha "8b4c25e" }}
+           :ns-default clojure.tools.deps.cli.api
+           :ns-aliases {help clojure.tools.deps.cli.help}}
+    :test {:extra-paths ["test"]}
+  }
+
+  ;;; no need for this
+  ;;;:mvn/repos {
+  ;;;  "central" {:url "https://repo1.maven.org/maven2/"}
+  ;;;  "clojars" {:url "https://repo.clojars.org/"}
+  ;;;}
+}

@@ -1,0 +1,6 @@
+{ :deps
+    {time-lib/time-lib { :local/root "../time-lib"}
+	 io.github.dmiller/deps-cljr-test1 {:git/tag "v1.0.0" :git/sha "9084c83"}}
+  :paths 
+    ["src" ]	
+}

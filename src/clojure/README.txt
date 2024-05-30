@@ -1,0 +1,1 @@
+The projects in this folder were used to do testing of local coordinates, deps chaining, etc.
