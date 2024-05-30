@@ -1,0 +1,110 @@
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\gitlibs.cljc                       C:\work\clojure\clr.tools.gitlibs\src\main\clojure\clojure\tools\gitlibs.cljc 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\gitlibs.cljc and C:\WORK\CLOJURE\CLR.TOOLS.GITLIBS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\GITLIBS.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\gitlibs\config.cljr                C:\work\clojure\clr.tools.gitlibs\src\main\clojure\clojure\tools\gitlibs\config.cljr 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\GITLIBS\config.cljr and C:\WORK\CLOJURE\CLR.TOOLS.GITLIBS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\GITLIBS\CONFIG.CLJR
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\gitlibs\impl.cljr                  C:\work\clojure\clr.tools.gitlibs\src\main\clojure\clojure\tools\gitlibs\impl.cljr 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\GITLIBS\impl.cljr and C:\WORK\CLOJURE\CLR.TOOLS.GITLIBS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\GITLIBS\IMPL.CLJR
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps.cljc                          C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps.cljc 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\deps.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps\extensions.cljc               C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps\extensions.cljc 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\DEPS\extensions.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\EXTENSIONS.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps\specs.cljc                    C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps\specs.cljc 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\DEPS\specs.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\SPECS.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps\tool.cljc                     C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps\tool.cljc 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\DEPS\tool.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\TOOL.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps\tree.cljc                     C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps\tree.cljc 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\DEPS\tree.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\TREE.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps\util\concurrent.clj           C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps\util\concurrent.clj 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\DEPS\UTIL\concurrent.clj and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\UTIL\CONCURRENT.CLJ
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps\util\concurrent.cljr          C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps\util\concurrent.cljr 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\DEPS\UTIL\concurrent.cljr and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\UTIL\CONCURRENT.CLJR
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps\util\dir.cljc                 C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps\util\dir.cljc 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\DEPS\UTIL\dir.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\UTIL\DIR.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps\util\io.cljc                  C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps\util\io.cljc 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\DEPS\UTIL\io.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\UTIL\IO.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps\util\session.cljc             C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps\util\session.cljc 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\DEPS\UTIL\session.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\UTIL\SESSION.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps\script\make_classpath2.cljc   C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps\script\make_classpath2.cljc 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\DEPS\SCRIPT\make_classpath2.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\SCRIPT\MAKE_CLASSPATH2.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps\script\parse.cljc             C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps\script\parse.cljc 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\DEPS\SCRIPT\parse.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\SCRIPT\PARSE.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps\script\resolve_tags.cljc      C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps\script\resolve_tags.cljc  
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\DEPS\SCRIPT\resolve_tags.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\SCRIPT\RESOLVE_TAGS.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps\extensions\deps.cljc          C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps\extensions\deps.cljc  
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\DEPS\EXTENSIONS\deps.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\EXTENSIONS\DEPS.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps\extensions\git.cljc           C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps\extensions\git.cljc  
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\DEPS\EXTENSIONS\git.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\EXTENSIONS\GIT.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\deps\extensions\local.cljc         C:\work\clojure\clr.tools.deps\src\main\clojure\clojure\tools\deps\extensions\local.cljc 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\DEPS\EXTENSIONS\local.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\EXTENSIONS\LOCAL.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\cli.cljc                           C:\work\clojure\tools.cli\src\main\clojure\clojure\tools\cli.cljc 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\cli.cljc and C:\WORK\CLOJURE\TOOLS.CLI\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\CLI.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\cli\api.cljc                       C:\work\clojure\clr.tools.deps.cli\src\main\clojure\clojure\tools\deps\cli\api.cljc 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\CLI\api.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS.CLI\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\CLI\API.CLJC
+FC: no differences encountered
+
+
+C:\work\clojure\deps.cljr>fc C:\work\clojure\deps.cljr\src\dotnet\cljr\clojure\tools\cli\help.cljc                      C:\work\clojure\clr.tools.deps.cli\src\main\clojure\clojure\tools\deps\cli\help.cljc 
+Comparing files C:\WORK\CLOJURE\DEPS.CLJR\SRC\DOTNET\CLJR\CLOJURE\TOOLS\CLI\help.cljc and C:\WORK\CLOJURE\CLR.TOOLS.DEPS.CLI\SRC\MAIN\CLOJURE\CLOJURE\TOOLS\DEPS\CLI\HELP.CLJC
+FC: no differences encountered
+
