@@ -42,20 +42,6 @@ You can start by reading these references:
 - [deps.edn Reference](https://clojure.org/reference/deps_edn)
 
 
-## Intallation
-
-`cljr` is installed as a `dotnet tool`:
-
-```
-dotnet tool install asdfasdfasdfasdfasdf
-```
-
-
-You should see output similar to this:
-
-
-
-You can now invoke `cljr` from the command line.
 
 ## Functionality
 
