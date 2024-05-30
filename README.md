@@ -138,12 +138,28 @@ You would invoke test running via
 cljr -X:test
 ```
 
-## Notes
+## Things that need work
 
 This is an alpha release.  Have at it.
 
-We need some design thinking around tools and prepping.  Most of the library support on the JVM side are very specific to the JVM world:  Maven, jars, Java-ish things.
-What is needed to support robust program development and installation in the CLR world.   Please weigh in.
+### Tools and prepping
+We need some design thinking around tools and prepping.  Most of the library support on the JVM side are very specific to the JVM world:  Maven, jars, Java-ish things. 
+
+What is needed to support robust program development and installation in the CLR world?
+
+## Clojure versioning
+
+One thing supported on the JVM side is the ability to specify the version of Clojure(JVM) that you want to run under.  This is fairly easily accommodated.  Clojure(JVM) is available as a Maven artifact.  Specify the desired version of Clojure in your application's :deps.   That version will get downloaded and added to the classpath.  And off you go.
+
+We are in a different world entirely on the CLR side.  We don't have a seamless way of incorporating general assemblies into program loading.  At present, ClojureCLR is usually installed as a dotnet tool.
+
+How can we provide ClojureCLR runtime versioning?
+
+##  Nuget
+
+How can we incorporate Nuget packages into the mix.   I can write a Nuget provider that pulls down and caches a Nuget package.  (I found an open-source library that does this; it's pretty easy to adapt to our needs.)  The problem is the variety of things that Nuget package might contain and how it can be used.  It could be a collection of assemblies.  It could be the kind of packaging I've been doing for ClojureCLR libraries: an assembly containing Clojure source files as embedded resources.  (In some ways, I regret that choice.)  A Nuget package could contain Clojure source files in a library folder.  
+
+What design will work for us?
 
 
 # Copyright and License
