@@ -11,10 +11,29 @@ The current release is 0.0.1-alpha1.
 
 ## Installation
 
-`cljr` is installed as a `dotnet tool`.
+Prerequisite:  ClojureCLR must be installed as a tool.  See [Getting started (ClojureCLR)](https://github.com/clojure/clojure-clr/wiki/Getting-started).
 
+`cljr` is also installed as a tool.
+To install as a global tool:
 
-## An introduction to deps.edna and the CLI
+```
+dotnet tool install --global Clojure.Cljr --version 0.1.0-alpha1
+```
+
+To install as a local tool:
+
+```
+dotnet new tool-manifest # if you are setting up this repo
+dotnet tool install --local Clojure.Cljr --version 0.1.0-alpha1
+```
+
+For other installation approaches, check out the [Clojure.Cljr Nuget page](https://www.nuget.org/packages/Clojure.Cljr/).
+
+## Running `cljr`
+
+Once installed, you should ube able to invoke (globally or locally) via `cljr`.
+
+## An introduction to deps.edn and the CLI
 
 You can start by reading these references:
 
