@@ -334,13 +334,12 @@ For more info, see:
             try
             {
                 using Process process = new();
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.FileName = "powershell.exe";
-                process.StartInfo.CreateNoWindow = false;   // TODO: When done debugging, set to true
+                SetInitialProcessParameters(process, installDir);
+
                 var env = process.StartInfo.EnvironmentVariables;
                 env["CLOJURE_LOAD_PATH"] = installDir;
+
                 var argList = process.StartInfo.ArgumentList;
-                argList.Add(Path.Join(installDir, Path.Join("tools","run-clojure-main.ps1")));
                 argList.Add("-m");
                 argList.Add("clojure.tools.deps.script.make-classpath2");
                 argList.Add("--install-dir");
@@ -359,6 +358,7 @@ For more info, see:
                 argList.Add(mainFile);
                 argList.Add("--manifest-file");
                 argList.Add(manifestFile);
+
                 toolsArgs.ForEach(arg => argList.Add("\"" + arg + "\"")); // incredible hack to get around dealing with what the powershell parser does to args with a : in them
 
                 //Console.WriteLine($"Classpath: toolsArg =  {string.Join(' ', toolsArgs)}");
@@ -427,23 +427,22 @@ For more info, see:
 
                 Console.WriteLine("Starting exec/tool");
 
-
                 using Process process = new();
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.FileName = "powershell.exe";
-                process.StartInfo.CreateNoWindow = false;   // TODO: When done debugging, set to true
+                SetInitialProcessParameters(process, installDir);
+
                 var env = process.StartInfo.EnvironmentVariables;
                 env["CLOJURE_LOAD_PATH"] = classpath + Path.PathSeparator + installDir;   // TODO -- what is this? need to get the equivalant of exec.jar on the load path
                 env["clojure.basis"] = basisFile;  
                 env["clojure.cli.install-dir"] = installDir;
+
                 var argList = process.StartInfo.ArgumentList;
-                argList.Add(Path.Join(installDir, Path.Join("tools", "run-clojure-main.ps1")));
                 argList.Add("-m");
                 argList.Add("clojure.run.exec");
+
                 cliArgs.CommandArgs.ForEach(arg => argList.Add(arg));
+
                 process.Start();
                 process.WaitForExit();
-
             }
             else
             {
@@ -477,23 +476,51 @@ For more info, see:
                 Console.WriteLine("Starting main");
 
                 using Process process = new();
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.FileName = "powershell.exe";
-                process.StartInfo.CreateNoWindow = false;   // TODO: When done debugging, set to true
+                SetInitialProcessParameters(process, installDir);
+
                 process.StartInfo.WorkingDirectory = Environment.CurrentDirectory;
+
                 var env = process.StartInfo.EnvironmentVariables;
                 env["CLOJURE_LOAD_PATH"] = classpath;  // TODO -- what is this?
                 env["clojure.basis"] = basisFile;   // will this do -Dclojure.basis=$BasisFile  ?
+
                 var argList = process.StartInfo.ArgumentList;
-                argList.Add(Path.Join(installDir, Path.Join("tools", "run-clojure-main.ps1")));
                 mainCacheOpts?.ForEach(arg => argList.Add(arg.Replace("\"", "\\\"")));
                 cliArgs.CommandArgs.ForEach(arg => argList.Add(arg));
+
                 process.Start();
                 process.WaitForExit();
             }
         }
 
         return 0;
+    }
+
+    private static void SetInitialProcessParameters(Process process, string installDir)
+    {
+        process.StartInfo.UseShellExecute = false;
+        process.StartInfo.CreateNoWindow = false;   // TODO: When done debugging, set to true
+
+        if (IsWindows)
+        {
+            process.StartInfo.FileName = "powershell.exe";
+        }
+        else
+        {
+            process.StartInfo.FileName = "bash";
+        }
+
+
+        var argList = process.StartInfo.ArgumentList;
+
+        if (IsWindows)
+        {
+            argList.Add(Path.Join(installDir, Path.Join("tools", "run-clojure-main.ps1")));
+        }
+        else
+        {
+            argList.Add(Path.Join(installDir, Path.Join("tools", "run-clojure-main.sh")));
+        }
     }
 }
 

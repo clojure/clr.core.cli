@@ -9,7 +9,7 @@
 	<ToolCommandName>cljr</ToolCommandName>
 	 <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	 <PackageOutputPath>./nupkg</PackageOutputPath>
-	  <Version>0.1.0-alpha1</Version>
+	  <Version>0.1.0-alpha2</Version>
 	  <PackageId>Clojure.$(AssemblyName)</PackageId>
 	  <Authors>ClojureCLR contributors</Authors>
 	  <Description>The deps.edn-powered CLI tool for ClojureCLR.</Description>
@@ -48,6 +48,7 @@
     <None Remove="clojure\tools\gitlibs\impl.cljr" />
     <None Remove="example-deps.edn" />
     <None Remove="tools\run-clojure-main.ps1" />
+    <None Remove="tools\run-clojure-main.sh" />
   </ItemGroup>
 
   <ItemGroup>
@@ -127,6 +128,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="example-deps.edn">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="tools\run-clojure-main.sh">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="tools\run-clojure-main.ps1">
