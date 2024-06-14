@@ -1,6 +1,5 @@
 ﻿namespace Cljr;
 
-
 public static class CommandLineParser
 {
     static readonly List<string> DeprecatedPrefixes = new() { "-R", "-C", "-O" };
@@ -19,7 +18,7 @@ public static class CommandLineParser
             var arg = args[i++];
 
             // PowerShell workaround
-            if (Program.IsWindows)
+            if (Platform.IsWindows)
             {
                 switch (arg)
                 {
@@ -36,7 +35,8 @@ public static class CommandLineParser
             }
 
             if (StartsWithDeprecatedPrefix(arg))
-                return items.SetError($"{arg[..2]} is no longer supported, use -A with repl, -M for main, -X for exec, -T for tool");
+                return items.SetError(
+                    $"{arg[..2]} is no longer supported, use -A with repl, -M for main, -X for exec, -T for tool");
 
             if (arg == "-Sresolve-tags")
                 return items.SetError("Option changed, use: clj -X:deps git-resolve-tags");
@@ -106,6 +106,7 @@ public static class CommandLineParser
                     default:
                         return items.SetError($"Unknown option: {arg}");
                 }
+
                 continue;
             }
 
@@ -165,5 +166,4 @@ public static class CommandLineParser
 
         return items;
     }
-
 }
