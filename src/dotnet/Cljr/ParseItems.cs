@@ -1,6 +1,14 @@
 ﻿namespace Cljr;
 
-public enum EMode { Version, Help, Repl, Tool, Exec, Main }
+public enum EMode
+{
+    Version,
+    Help,
+    Repl,
+    Tool,
+    Exec,
+    Main
+}
 
 public class ParseItems
 {
@@ -35,19 +43,13 @@ public class ParseItems
             CommandAliases[mode] = alias;
     }
 
-    public string GetCommandAlias(EMode mode)
-    {
-        if (CommandAliases.TryGetValue(mode, out var alias))
-            return alias;
-        else
-            return string.Empty;
-    }
+    public string GetCommandAlias(EMode mode) =>
+        CommandAliases.TryGetValue(mode, out var alias)
+            ? alias
+            : string.Empty;
 
-    public bool TryGetCommandAlias(EMode mode, out string alias)
-    {
-        return CommandAliases.TryGetValue(mode, value: out alias);
-    }
-
+    public bool TryGetCommandAlias(EMode mode, out string? alias) =>
+        CommandAliases.TryGetValue(mode, value: out alias);
 
     public void AddFlag(string flag)
     {
