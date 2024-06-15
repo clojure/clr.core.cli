@@ -486,7 +486,7 @@ static Process CreateClojureProcess(string installDir, string[] args, Dictionary
         StartInfo =
         {
             UseShellExecute = false,
-            CreateNoWindow = !Debugger.IsAttached,
+            CreateNoWindow = false,
             FileName = Platform.IsWindows ? "powershell.exe" : "bash",
         }
     };
