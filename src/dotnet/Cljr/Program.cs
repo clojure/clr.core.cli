@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
@@ -116,7 +117,32 @@ For more info, see:
 
     //static void EndExecution(int exitCode) => Environment.Exit(exitCode);
 
-    static readonly string Version = typeof(Program).Assembly.GetName().Version!.ToString();
+    //static readonly string Version = typeof(Program).Assembly.GetName().Version!.ToString();
+    private static string _version = string.Empty; 
+
+    static string Version
+    {
+        get
+        {
+            if (_version == string.Empty)
+            {
+                var version = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
+                if (version is null)
+                    version = typeof(Program).Assembly.GetName().Version!.ToString();
+                else
+                {
+                    var parts = version.Split('+');
+                    version = parts[0];
+                }
+
+                _version = version;
+
+            }
+
+            return _version;
+        }
+    }
+
 
 
     static bool IsNewerFile(string filename1, string filename2)
