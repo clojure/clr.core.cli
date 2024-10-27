@@ -6,7 +6,7 @@ For ClojureCLR on .NET 6 and later.
 
 ## Releases
 
-The current release is 0.0.1-alpha2.
+The current release is 0.0.1-alpha3.
 
 
 ## Installation
@@ -17,14 +17,14 @@ Prerequisite:  ClojureCLR must be installed as a tool.  See [Getting started (Cl
 To install as a global tool:
 
 ```
-dotnet tool install --global Clojure.Cljr --version 0.1.0-alpha2
+dotnet tool install --global Clojure.Cljr --version 0.1.0-alpha3
 ```
 
 To install as a local tool:
 
 ```
 dotnet new tool-manifest # if you are setting up this repo
-dotnet tool install --local Clojure.Cljr --version 0.1.0-alpha2
+dotnet tool install --local Clojure.Cljr --version 0.1.0-alpha3
 ```
 
 For other installation approaches, check out the [Clojure.Cljr Nuget page](https://www.nuget.org/packages/Clojure.Cljr/).
