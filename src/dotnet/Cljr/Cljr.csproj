@@ -9,7 +9,7 @@
 	<ToolCommandName>cljr</ToolCommandName>
 	 <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	 <PackageOutputPath>./nupkg</PackageOutputPath>
-	  <Version>0.1.0-alpha3</Version>
+	  <Version>0.1.0-alpha4</Version>
 	  <PackageId>Clojure.$(AssemblyName)</PackageId>
 	  <Authors>ClojureCLR contributors</Authors>
 	  <Description>The deps.edn-powered CLI tool for ClojureCLR.</Description>
