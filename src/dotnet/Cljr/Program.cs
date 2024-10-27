@@ -359,7 +359,10 @@ For more info, see:
                 argList.Add("--manifest-file");
                 argList.Add(manifestFile);
 
-                toolsArgs.ForEach(arg => argList.Add("\"" + arg + "\"")); // incredible hack to get around dealing with what the powershell parser does to args with a : in them
+                if (IsWindows) 
+                    toolsArgs.ForEach(arg => argList.Add("\"" + arg + "\"")); // incredible hack to get around dealing with what the powershell parser does to args with a : in them
+                else
+                    toolsArgs.ForEach(arg => argList.Add(arg));
 
                 //Console.WriteLine($"Classpath: toolsArg =  {string.Join(' ', toolsArgs)}");
                 //Console.WriteLine($"Classpath: argList = {string.Join(' ', argList)}");
