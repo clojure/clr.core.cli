@@ -446,6 +446,7 @@ For more info, see:
 
                 process.Start();
                 process.WaitForExit();
+                return process.ExitCode;
             }
             else
             {
@@ -493,6 +494,7 @@ For more info, see:
 
                 process.Start();
                 process.WaitForExit();
+                return process.ExitCode;
             }
         }
 
