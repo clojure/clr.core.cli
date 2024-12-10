@@ -2,7 +2,7 @@
   "profiles": {
     "Cljr": {
       "commandName": "Project",
-      "commandLineArgs": "-Sforce -X:test:runner "
+      "commandLineArgs": "-T:deps tree"
     }
   }
 }

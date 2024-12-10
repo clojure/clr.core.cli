@@ -101,12 +101,6 @@ For more info, see:
  https://clojure.org/reference/repl_and_main");
     }
 
-    static void PrintVersion()
-    {
-        Console.WriteLine($"ClojureCLR CLI Version: {Version}");
-    }
-
-
     static void Warn(string message) => Console.Error.WriteLine(message);
 
     //static void EndExecution(int exitCode, string message)
@@ -116,6 +110,11 @@ For more info, see:
     //}
 
     //static void EndExecution(int exitCode) => Environment.Exit(exitCode);
+
+    static void PrintVersion()
+    {
+        Console.WriteLine($"ClojureCLR CLI Version: {Version}");
+    }
 
     //static readonly string Version = typeof(Program).Assembly.GetName().Version!.ToString();
     private static string _version = string.Empty; 
@@ -143,8 +142,6 @@ For more info, see:
         }
     }
 
-
-
     static bool IsNewerFile(string filename1, string filename2)
     {
         if (!File.Exists(filename1)) return false;
@@ -159,8 +156,6 @@ For more info, see:
         var hash = MD5.Create().ComputeHash(System.Text.UTF8Encoding.UTF8.GetBytes(s));
         return BitConverter.ToString(hash);
     }
-
-
 
     static int Main(string[] args)
     {
@@ -454,7 +449,7 @@ For more info, see:
             {
                 // & $JavaCmd -XX:-OmitStackTraceInFastThrow @JavaOpts @JvmCacheOpts @JvmOpts "-Dclojure.basis=$BasisFile" -classpath "$CP;$InstallDir/exec.jar" clojure.main -m clojure.run.exec @ClojureArgs
 
-                Console.WriteLine("Starting exec/tool");
+                //Console.WriteLine("Starting exec/tool");
 
                 using Process process = new();
                 SetInitialProcessParameters(process, installDir);
@@ -503,7 +498,7 @@ For more info, see:
                 //process.Start();
                 //process.WaitForExit();
 
-                Console.WriteLine("Starting main");
+                //Console.WriteLine("Starting main");
 
                 using Process process = new();
                 SetInitialProcessParameters(process, installDir);
