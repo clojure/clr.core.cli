@@ -60,6 +60,7 @@
   subprocesses (tool, resolve-deps, make-classpath-map).
 
   Options:
+    :dir     - directory root path, defaults to current directory
     :root    - dep source, default = :standard
     :user    - dep source, default = :standard
     :project - dep source, default = :standard (\"./deps.edn\")

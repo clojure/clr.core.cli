@@ -146,10 +146,11 @@
   (throw-bad-coord lib coord))
 
 (defn find-all-versions
-  "Find versions across all registered procurer types and return first that finds some.
-  Returns coll of coordinates for this lib (based on lib and partial coordinate)."
+  "Find versions across all registered procurer types.
+  Returns coll of coordinates for this lib (based on lib and partial coordinate).
+  For each procurer type, coordinates are returned in chronological order."
   [lib coord config]
-  (some #(find-versions lib coord % config) (procurer-types)))
+  (mapcat #(find-versions lib coord % config) (procurer-types)))
 
 ;; Methods switching on manifest type
 

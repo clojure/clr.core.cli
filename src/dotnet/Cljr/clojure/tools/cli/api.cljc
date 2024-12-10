@@ -417,7 +417,10 @@
   [{:keys [lib tool n] :or {n 8} :as args}]
   (let [{:keys [root-edn user-edn]} (deps/find-edn-maps)
         master-edn (deps/merge-edns [root-edn user-edn])
-        trunc-fn (if (= n :all) (fn [_n x] x) #(apply take-last %&))
+        trunc-fn (fn [n x]
+                   (if (= n :all)
+                     x
+                     (mapcat #(take-last n %) (vals (group-by keys x)))))
         coords (cond
                  tool
                  (if-let [{:keys [lib coord]} (tool/resolve-tool (name tool))]

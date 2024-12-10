@@ -1,5 +1,5 @@
 ﻿{
-  :paths ["."]
+  :paths ["src"]
 
   ;;; eventually, we need to be able to declare the clojure version to use.
   ;;;:deps {
