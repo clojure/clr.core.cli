@@ -2,14 +2,14 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net8.0;net9.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<PackAsTool>true</PackAsTool>
 	<ToolCommandName>cljr</ToolCommandName>
 	 <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	 <PackageOutputPath>./nupkg</PackageOutputPath>
-	  <Version>0.1.0-alpha5</Version>
+	  <Version>0.1.0-alpha6</Version>
 	  <PackageId>Clojure.$(AssemblyName)</PackageId>
 	  <Authors>ClojureCLR contributors</Authors>
 	  <Description>The deps.edn-powered CLI tool for ClojureCLR.</Description>
@@ -38,7 +38,6 @@
     <None Remove="clojure\tools\deps\specs.cljc" />
     <None Remove="clojure\tools\deps\tool.cljc" />
     <None Remove="clojure\tools\deps\tree.cljc" />
-    <None Remove="clojure\tools\deps\util\concurrent.clj" />
     <None Remove="clojure\tools\deps\util\concurrent.cljr" />
     <None Remove="clojure\tools\deps\util\dir.cljc" />
     <None Remove="clojure\tools\deps\util\io.cljc" />
@@ -46,6 +45,7 @@
     <None Remove="clojure\tools\gitlibs.cljc" />
     <None Remove="clojure\tools\gitlibs\config.cljr" />
     <None Remove="clojure\tools\gitlibs\impl.cljr" />
+    <None Remove="deps.edn" />
     <None Remove="example-deps.edn" />
     <None Remove="tools\run-clojure-main.ps1" />
     <None Remove="tools\run-clojure-main.sh" />
@@ -103,9 +103,6 @@
     <Content Include="clojure\tools\deps\tree.cljc">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="clojure\tools\deps\util\concurrent.clj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="clojure\tools\deps\util\concurrent.cljr">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -125,6 +122,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="clojure\tools\gitlibs\impl.cljr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="deps.edn">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="example-deps.edn">
