@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Cljr": {
+      "commandName": "Project",
+      "commandLineArgs": "-X:test",
+      "workingDirectory": "C:\\work\\temp\\testretcode"
+    }
+  }
+}

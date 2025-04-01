@@ -1,1 +1,1 @@
-clojure.main @args
+clojure.main @args ; exit $LASTEXITCODE

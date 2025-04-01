@@ -24,11 +24,17 @@
     [clojure.lang PersistentQueue]
     #?(:clj [java.io File InputStreamReader BufferedReader]
 	   :cljr [System.IO  Path FileInfo DirectoryInfo])
-    #?(:clj [java.lang ProcessBuilder ProcessBuilder$Redirect] :cljr [System.Diagnostics ProcessStartInfo Process])
+    #?(:clj [java.lang ProcessBuilder ProcessBuilder$Redirect] )   ;;; :cljr [System.Diagnostics ProcessStartInfo Process]  -- defer until after we load the dll, if required.
     #?(:clj [java.util List] 
 	   :cljr [System.Collections ArrayList])
 	#?(:cljr [System.Threading CancellationTokenSource CancellationToken])   
 	   ))
+
+(try 
+  (assembly-load-from (str clojure.lang.RT/SystemRuntimeDirectory "System.Diagnostics.Process.dll"))
+  (catch Exception e))  ;; failing silently okay -- if we need it and didn't find it, a type reference will fail later
+
+(import '[System.Diagnostics Process ProcessStartInfo])
 
 (set! *warn-on-reflection* true)
 
@@ -489,7 +495,7 @@
              :ppath use-path
              :child-pred child-pred})]
     (loop [pendq nil ;; a resolved child-lookup thunk to look at first
-           q (into (PersistentQueue/EMPTY) (map vector deps)) ;; queue of nodes or child-lookups
+           q (into PersistentQueue/EMPTY (map vector deps)) ;; queue of nodes or child-lookups
            version-map nil ;; track all seen versions of libs and which version is selected
            exclusions nil ;; tracks exclusions marked in the tree
            cut nil ;; tracks cuts made of child nodes based on exclusions
@@ -536,7 +542,7 @@
                  :ppath use-path
                  :child-pred child-pred})]
         (loop [pendq nil ;; a resolved child-lookup thunk to look at first
-               q (into (PersistentQueue/EMPTY) (map vector deps)) ;; queue of nodes or child-lookups
+               q (into PersistentQueue/EMPTY (map vector deps)) ;; queue of nodes or child-lookups
                version-map {} ;; track all seen versions of libs and which version is selected
                exclusions nil ;; tracks exclusions marked in the tree
                cut nil ;; tracks cuts made of child nodes based on exclusions
@@ -667,7 +673,7 @@
 (defn- make-tree
   [lib-map]
   (let [{roots false, nonroots true} (group-by #(-> % val :dependents boolean) lib-map)]
-    (loop [q (into (PersistentQueue/EMPTY) roots)
+    (loop [q (into PersistentQueue/EMPTY roots)
            remaining nonroots
            tree {}]
       (let [[lib coord :as node] (peek q)

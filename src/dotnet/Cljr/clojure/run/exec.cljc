@@ -54,7 +54,7 @@
 
 (defn- envelope
   [args tag val out-wr err-wr start]
-  (let [end #?(:clj (System/currentTimeMillis) :cljr (int (/ (.Ticks (DateTime/Now)) (TimeSpan/TicksPerMillisecond))))]
+  (let [end #?(:clj (System/currentTimeMillis) :cljr (long (/ (.Ticks (DateTime/Now)) (TimeSpan/TicksPerMillisecond))))]
     (cond-> {:tag tag
              :val (binding [*print-namespace-maps* false] (pr-str val))
              :ms (- end start)}
@@ -66,7 +66,7 @@
   (let [clean-args (remove-ns-keys args "clojure.exec")
         out-wr (StringWriter.)
         err-wr (StringWriter.)
-        start #?(:clj (System/currentTimeMillis) :cljr (int (/ (.Ticks (DateTime/Now)) (TimeSpan/TicksPerMillisecond))))
+        start #?(:clj (System/currentTimeMillis) :cljr (long (/ (.Ticks (DateTime/Now)) (TimeSpan/TicksPerMillisecond))))
         envelope (binding [*out* out-wr, *err* err-wr]
                    (try
                      (envelope args :ret (f clean-args) out-wr err-wr start)

@@ -10,11 +10,11 @@
         <ToolCommandName>cljr</ToolCommandName>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageOutputPath>./nupkg</PackageOutputPath>
-        <Version>0.1.0-alpha2</Version>
+        <Version>0.1.0-alpha6</Version>
         <PackageId>Clojure.$(AssemblyName)</PackageId>
         <Authors>ClojureCLR contributors</Authors>
         <Description>The deps.edn-powered CLI tool for ClojureCLR.</Description>
-        <Copyright>ClojureCLR contributors, 2024</Copyright>
+        <Copyright>ClojureCLR contributors, 2025</Copyright>
         <PackageProjectUrl>https://github.com/clojure/clr.core.cli</PackageProjectUrl>
         <RepositoryUrl>https://github.com/clojure/clr.core.cli</RepositoryUrl>
         <PackageLicenseExpression>EPL-1.0</PackageLicenseExpression>
@@ -38,5 +38,4 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
-
 </Project>

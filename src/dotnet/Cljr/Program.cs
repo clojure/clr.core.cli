@@ -494,7 +494,7 @@ static Process CreateClojureProcess(string installDir, string[] args, Dictionary
     foreach (var (key, value) in env)
         process.StartInfo.EnvironmentVariables[key] = value;
 
-    List<string> prependArgs = [];
+  List<string> prependArgs = [];
 
     if (Platform.IsWindows)
         prependArgs.AddRange([
@@ -509,4 +509,5 @@ static Process CreateClojureProcess(string installDir, string[] args, Dictionary
         process.StartInfo.ArgumentList.Add(arg.Contains(' ') ? $"\"{arg}\"" : arg);
 
     return process;
+
 }
