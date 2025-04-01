@@ -467,7 +467,8 @@ For more info, see:
 
                 process.Start();
                 process.WaitForExit();
-                return process.ExitCode;
+                if (process.ExitCode != 0)
+                    Environment.Exit(process.ExitCode);
             }
             else
             {
@@ -515,7 +516,8 @@ For more info, see:
 
                 process.Start();
                 process.WaitForExit();
-                return process.ExitCode;
+               if ( process.ExitCode != 0 )
+                        Environment.Exit(process.ExitCode);
             }
         }
 

@@ -2,7 +2,8 @@
   "profiles": {
     "Cljr": {
       "commandName": "Project",
-      "commandLineArgs": "-T:deps tree"
+      "commandLineArgs": "-X:test",
+      "workingDirectory": "C:\\work\\temp\\testretcode"
     }
   }
 }
