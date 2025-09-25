@@ -2,8 +2,8 @@
   "profiles": {
     "Cljr": {
       "commandName": "Project",
-      "commandLineArgs": "-X:test",
-      "workingDirectory": "C:\\work\\temp\\testretcode"
+      "commandLineArgs": "-Sforce -Sverbose",
+      "workingDirectory": "C:\\work\\temp\\test"
     }
   }
 }
