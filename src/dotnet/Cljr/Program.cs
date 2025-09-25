@@ -218,7 +218,7 @@ if (stale && !cliArgs.HasFlag("describe"))
         process.Start();
         process.WaitForExit();
         if (process.ExitCode is not 0)
-            return process.ExitCode;
+            Environment.Exit(process.ExitCode);
 
         if (!File.Exists(cpFile))
             throw new InvalidOperationException();
@@ -306,6 +306,8 @@ else
 
         process.Start();
         process.WaitForExit();
+        if (process.ExitCode is not 0)
+            Environment.Exit(process.ExitCode);
     }
     else
     {
@@ -354,6 +356,8 @@ else
         process.StartInfo.WorkingDirectory = Environment.CurrentDirectory;
         process.Start();
         process.WaitForExit();
+        if (process.ExitCode is not 0)
+            Environment.Exit(process.ExitCode);
     }
 }
 
