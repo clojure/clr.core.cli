@@ -24,7 +24,7 @@ Beyond that, the best test is to use the tool.  I typically do the build, which 
 Then go into the `nupkg` directory and install the package with 
 
 ```
-dotnet tool install -g --add-source . Cljr` --version 0.1.0-alphaX
+dotnet tool install -g --add-source . Clojure.Cljr` --version 0.1.0-alphaX
 ```
 
 whatever version is current.  Then go into a few of the other libraries and run `cljr -X:test`.
