@@ -1,6 +1,6 @@
-﻿using System.Diagnostics;
+﻿using Cljr;
+using System.Diagnostics;
 using System.Security.Cryptography;
-using Cljr;
 
 var cliArgs = CommandLineParser.Parse(args);
 
@@ -190,6 +190,12 @@ if (stale && !cliArgs.HasFlag("describe"))
 
     try
     {
+
+        var platformDependentToolArgs = Platform.IsWindows
+            ? // incredible hack to get around dealing with what the powershell parser does to args with a : in them
+              toolsArgs.Select(arg => $"\"{arg}\"")
+            : toolsArgs;
+
         using var process = CreateClojureProcess(
             installDir,
             args:
@@ -203,8 +209,7 @@ if (stale && !cliArgs.HasFlag("describe"))
                 "--jvm-file", jvmFile,
                 "--main-file", mainFile,
                 "--manifest-file", manifestFile,
-                // incredible hack to get around dealing with what the powershell parser does to args with a : in them
-                ..toolsArgs.Select(arg => $"\"{arg}\""),
+                ..platformDependentToolArgs
             ],
             env: new()
             {
@@ -498,7 +503,7 @@ static Process CreateClojureProcess(string installDir, string[] args, Dictionary
     foreach (var (key, value) in env)
         process.StartInfo.EnvironmentVariables[key] = value;
 
-  List<string> prependArgs = [];
+    List<string> prependArgs = [];
 
     if (Platform.IsWindows)
         prependArgs.AddRange([
@@ -509,8 +514,16 @@ static Process CreateClojureProcess(string installDir, string[] args, Dictionary
     else
         prependArgs.Add(Path.Join(installDir, "tools", "run-clojure-main.sh"));
 
-    foreach (var arg in prependArgs.Concat(args))
-        process.StartInfo.ArgumentList.Add(arg.Contains(' ') ? $"\"{arg}\"" : arg);
+    if (Platform.IsWindows)
+    {
+        foreach (var arg in prependArgs.Concat(args))
+            process.StartInfo.ArgumentList.Add(arg.Contains(' ') ? $"\"{arg}\"" : arg);
+    }
+    else
+    {
+        foreach (var arg in prependArgs.Concat(args))
+            process.StartInfo.ArgumentList.Add(arg);
+    }
 
     return process;
 
