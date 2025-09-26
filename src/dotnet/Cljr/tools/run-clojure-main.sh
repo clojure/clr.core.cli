@@ -1,1 +1,1 @@
-Clojure.Main $*
+Clojure.Main "$@"
