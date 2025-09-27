@@ -2,7 +2,7 @@
   "profiles": {
     "Cljr": {
       "commandName": "Project",
-      "commandLineArgs": "-X clojure.core/prn :val '{:s1 \"\"\"nospaces\"\"\" :s2 \"\"has spaces\"\"}'\r\n",
+      "commandLineArgs": "-Sforce -X:deps tree ",
       "workingDirectory": "C:\\work\\temp\\test"
     }
   }
