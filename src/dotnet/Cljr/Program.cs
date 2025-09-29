@@ -100,7 +100,7 @@ var cacheDir = configProject is not null ? ".cpcache" : userCacheDir;
 configProject ??= defaultConfigFile;
 
 // Construct location of cached classpath file
-const string cacheVersion = "4";
+const string cacheVersion = "CLR4";
 
 var cacheKeyHash = GetStringHash([
     cacheVersion,
