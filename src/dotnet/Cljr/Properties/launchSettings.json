@@ -2,8 +2,8 @@
   "profiles": {
     "Cljr": {
       "commandName": "Project",
-      "commandLineArgs": "-Sforce -X:deps tree ",
-      "workingDirectory": "C:\\work\\temp\\test"
+      "commandLineArgs": "-Sforce -X:test",
+      "workingDirectory": "C:\\work\\clojure\\clr.tools.namespace"
     }
   }
 }
