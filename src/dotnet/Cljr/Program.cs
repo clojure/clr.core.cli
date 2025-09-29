@@ -53,17 +53,15 @@ var candidate = depsFiles
     .Select(f => Path.Join(configDir, f))
     .FirstOrDefault(File.Exists);
 
-string? configUser;
+var configUser =
+    candidate is null
+        ? Path.Join(configDir, defaultConfigFile)
+        : candidate;
 
 if (candidate is null)
-{
-    configUser = Path.Join(configDir, defaultConfigFile);
     File.Copy(Path.Join(installDir, "example-deps.edn"), configUser);
-}
-else
-{
-    configUser = candidate;
-}
+
+
 
 var configToolsDir = Path.Join(configDir, "tools");
 // Make sure the configDir tools directory exists.
