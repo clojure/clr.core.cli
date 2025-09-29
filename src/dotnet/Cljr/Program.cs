@@ -32,7 +32,16 @@ var installDir = AppContext.BaseDirectory;
 //var toolsCp = Path.Combine(InstallDir, $"clojure-tools-{Version}.jar");  // TODO -- what do we do instead?
 
 // Determine user config directory; if it does not exist, create it
-var configDir = Environment.GetEnvironmentVariable("CLJ_CONFIG") ?? Path.Join(Platform.HomeDir, ".clojure");
+var configEnv = Environment.GetEnvironmentVariable("CLJ_CONFIG");
+var xdgEnv = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
+var homeConfig = Platform.HomeDir;
+
+var configDir = !string.IsNullOrEmpty(configEnv)
+    ? configEnv
+    : !string.IsNullOrEmpty(xdgEnv)
+        ? Path.Join(xdgEnv, "clojure")
+        : Path.Join(homeConfig, ".clojure");
+
 if (!Directory.Exists(configDir))
     Directory.CreateDirectory(configDir);
 
