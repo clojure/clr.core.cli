@@ -45,14 +45,24 @@ var configDir = !string.IsNullOrEmpty(configEnv)
 if (!Directory.Exists(configDir))
     Directory.CreateDirectory(configDir);
 
-const string defaultConfigFile = "deps.edn";
-string[] depsFiles = ["deps-clr.edn", defaultConfigFile];
+const string defaultConfigFile = "deps-clr.edn";
+string[] depsFiles = ["deps-clr.edn", "deps.edn"];  // order of preference
 
 // Copy in example deps.edn if no deps.edn in the configDir
-if (depsFiles.Select(f => Path.Join(configDir, f)).FirstOrDefault(File.Exists) is not { } configUser)
+var candidate = depsFiles
+    .Select(f => Path.Join(configDir, f))
+    .FirstOrDefault(File.Exists);
+
+string? configUser;
+
+if (candidate is null)
 {
     configUser = Path.Join(configDir, defaultConfigFile);
     File.Copy(Path.Join(installDir, "example-deps.edn"), configUser);
+}
+else
+{
+    configUser = candidate;
 }
 
 var configToolsDir = Path.Join(configDir, "tools");
