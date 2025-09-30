@@ -164,6 +164,8 @@
 (defn get-env-var [^String env-var]
   ( #?(:clj System/getenv 
        :cljr Environment/GetEnvironmentVariable)  env-var))
+#?(
+:clj
 
 (defn user-deps-path
   "Use the same logic as clj to calculate the location of the user deps.edn.
@@ -177,6 +179,23 @@
                          :else (str home directory-separator ".clojure"))]
     (str config-dir directory-separator "deps.edn")))
 
+:cljr
+
+(defn user-deps-path
+  "Use the same logic as clj to calculate the location of the user deps.edn.
+  Note that it's possible no file may exist at this location."
+  ([] 
+    (user-deps-path "deps-clr.edn"))
+  ([filename]
+    (let [config-env (get-env-var "CLJ_CONFIG")
+          xdg-env (get-env-var "XDG_CONFIG_HOME")
+          home (get-user-home)
+          config-dir (cond config-env config-env
+                           xdg-env (str xdg-env directory-separator "clojure")
+                           :else (str home directory-separator ".clojure"))]
+      (str config-dir directory-separator filename))))
+
+)
 #?(
 :clj
 
@@ -202,12 +221,16 @@
   ([]
    (find-edn-maps nil))
   ([project-edn-file]
-   (let [user-loc (cio/file-info (user-deps-path))
-         f1-loc (cio/file-info (str dir/*the-dir* directory-separator "deps-clr.edn"))
-         project-loc 
-		   (cond  project-edn-file (cio/file-info project-edn-file) 
-		         (.Exists f1-loc) f1-loc 
-				 :else (cio/file-info (str dir/*the-dir* directory-separator "deps.edn")))]
+   (let [user-loc1 (cio/file-info (user-deps-path "deps-clr.edn"))
+         user-loc2 (cio/file-info (user-deps-path "deps.edn"))
+		 user-loc (cond (.Exists user-loc1) user-loc1
+		                (.Exists user-loc2) user-loc2
+						:else user-loc1)
+		 project-loc1 (cio/file-info (str dir/*the-dir* directory-separator "deps-clr.edn"))
+		 project-loc2 (cio/file-info (str dir/*the-dir* directory-separator "deps.edn"))
+		 project-loc (cond (.Exists project-loc1) project-loc1
+		                   (.Exists project-loc2) project-loc2
+						   :else project-loc1)]
      (cond-> {:root-edn (root-deps)}
        (.Exists user-loc) (assoc :user-edn (slurp-deps user-loc))
        (.Exists project-loc) (assoc :project-edn (slurp-deps project-loc))))))
@@ -978,9 +1001,8 @@
   [{:keys [root user project extra] :as params
     :or {root :standard, user :standard, project :standard}}]
   (let [root-edn (choose-deps root #(root-deps))
-        user-edn (choose-deps user #(-> (user-deps-path) #?(:clj jio/file :cljr identity)  dir/canonicalize slurp-deps))
-        project-edn (choose-deps project #(or (-> "deps-clr.edn" #?(:clj jio/file :cljr identity)  dir/canonicalize slurp-deps)
-                                              (-> "deps.edn"     #?(:clj jio/file :cljr identity)  dir/canonicalize slurp-deps)))
+        user-edn (choose-deps user #(-> (user-deps-path) jio/file dir/canonicalize slurp-deps))
+        project-edn (choose-deps project #(-> "deps.edn" jio/file dir/canonicalize slurp-deps))
         extra-edn (choose-deps extra (constantly nil))]
     (cond-> {}
       root-edn (assoc :root root-edn)
@@ -996,17 +1018,17 @@
   [{:keys [root user project extra] :as params
     :or {root :standard, user :standard, project :standard}}]
   (let [root-edn (choose-deps root #(root-deps))
-        user-edn (choose-deps user #(-> (user-deps-path) #?(:clj jio/file :cljr identity)  dir/canonicalize slurp-deps))
+        user-edn (choose-deps user #(or (-> (user-deps-path "deps-clr.edn") dir/canonicalize slurp-deps)
+		                                (-> (user-deps-path "deps-clr.edn") dir/canonicalize slurp-deps)))
         project-edn (choose-deps project #(or 
-											(-> "deps-clr.edn" #?(:clj jio/file :cljr identity)  dir/canonicalize slurp-deps)	
-											(-> "deps.edn" #?(:clj jio/file :cljr identity)  dir/canonicalize slurp-deps)))
+											(-> "deps-clr.edn" dir/canonicalize slurp-deps)	
+											(-> "deps.edn" dir/canonicalize slurp-deps)))
         extra-edn (choose-deps extra (constantly nil))]
     (cond-> {}
       root-edn (assoc :root root-edn)
       user-edn (assoc :user user-edn)
       project-edn (assoc :project project-edn)
       extra-edn (assoc :extra extra-edn))))
-
 	
 )
 
