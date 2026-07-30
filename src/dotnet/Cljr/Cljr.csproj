@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFrameworks>net6.0;net8.0;net9.0</TargetFrameworks>
+        <TargetFrameworks>net6.0;net8.0;net9.0;net10.0;net11.0</TargetFrameworks>
         <LangVersion>12</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
@@ -14,7 +14,7 @@
         <PackageId>Clojure.$(AssemblyName)</PackageId>
         <Authors>ClojureCLR contributors</Authors>
         <Description>The deps.edn-powered CLI tool for ClojureCLR.</Description>
-        <Copyright>ClojureCLR contributors, 2025</Copyright>
+        <Copyright>ClojureCLR contributors, 2026</Copyright>
         <PackageProjectUrl>https://github.com/clojure/clr.core.cli</PackageProjectUrl>
         <RepositoryUrl>https://github.com/clojure/clr.core.cli</RepositoryUrl>
         <PackageLicenseExpression>EPL-1.0</PackageLicenseExpression>
