@@ -9,9 +9,9 @@ public class ParsingTests
     [InlineData("-Srepro --help")]
     public void HelpTests(string cli)
     {
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var items = CommandLineParser.Parse(args);
-        Assert.True(items.Mode == EMode.Help);
+        Assert.Equal(EMode.Help, items.Mode);
     }
 
     [Theory]
@@ -21,9 +21,9 @@ public class ParsingTests
     [InlineData("-Srepro --version")]
     public void VersionTests(string cli)
     {
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var items = CommandLineParser.Parse(args);
-        Assert.True(items.Mode == EMode.Version);
+        Assert.Equal(EMode.Version, items.Mode);
     }
 
 
@@ -39,9 +39,9 @@ public class ParsingTests
     public void SFlagTests(string flag)
     {
         var cli = $"-S{flag} -X:A: B 12 13";
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var items = CommandLineParser.Parse(args);
-        Assert.True(items.FlagCount == 1);
+        Assert.Equal(1, items.FlagCount);
         Assert.True(items.HasFlag(flag));
     }
 
@@ -51,9 +51,9 @@ public class ParsingTests
     public void PFlagTests()
     {
         var cli = "-P -X:A:B 12 13";
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var items = CommandLineParser.Parse(args);
-        Assert.True(items.FlagCount == 1);
+        Assert.Equal(1, items.FlagCount);
         Assert.True(items.HasFlag("prep"));
     }
 
@@ -64,7 +64,7 @@ public class ParsingTests
     [InlineData("-Srepro -Rthing -X:A: B 12 13")]
     public void DeprecatedOptionsTests(string cli)
     {
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var cmd = CommandLineParser.Parse(args);
         Assert.True(cmd.IsError);
         Assert.NotNull(cmd.ErrorMessage);
@@ -78,7 +78,7 @@ public class ParsingTests
     [InlineData("-Srepro -Swhat! things", "Unknown option")]
     public void MissingOrBadArgumentsToOptions(string cli, string msgPrefix)
     {
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var cmd = CommandLineParser.Parse(args);
         Assert.True(cmd.IsError);
         Assert.NotNull(cmd.ErrorMessage);
@@ -89,18 +89,18 @@ public class ParsingTests
     public void StringArgumentsForOptionsTests()
     {
         string cli = "-Srepro -Sdeps ABC -Scp DEF -Sthreads 12 -X:A: B 12 13";
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var items = CommandLineParser.Parse(args);
-        Assert.True(items.Deps?.Equals("ABC"));
-        Assert.True(items.ForceClasspath?.Equals("DEF"));
-        Assert.True(items.Threads == 12);
+        Assert.Equal("ABC", items.Deps);
+        Assert.Equal("DEF", items.ForceClasspath);
+        Assert.Equal(12, items.Threads);
     }
 
     [Fact]
     public void AOptionRequiresAnAliasTest()
     {
         string cli = "-Srepro -A  -X:A: B 12 13";
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var cmd = CommandLineParser.Parse(args);
         Assert.True(cmd.IsError);
         Assert.NotNull(cmd.ErrorMessage);
@@ -112,7 +112,7 @@ public class ParsingTests
     [InlineData("-Srepro -- B 12 13", "B", "12", "13")]
     public void ArgsGetPassedTests(string cli, params string[] expectedAargs)
     {
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var cmd = CommandLineParser.Parse(args);
         Assert.True(cmd.CommandArgs.Zip(expectedAargs.ToList()).All(x => x.First.Equals(x.Second)));
     }
@@ -123,11 +123,11 @@ public class ParsingTests
     [InlineData("-Srepro -T:A:B 12 13", EMode.Tool, ":A:B", "12", "13")]
     [InlineData("-Srepro -- 12 13", EMode.Repl, null, "12", "13")]
     [InlineData("-Srepro 12 13", EMode.Repl, null, "12", "13")]
-    public void CorrectCommandTypeCreated(string cli, EMode mode, string cmdAliases, params string[] expectedArgs)
+    public void CorrectCommandTypeCreated(string cli, EMode mode, string? cmdAliases, params string[] expectedArgs)
     {
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var items = CommandLineParser.Parse(args);
-        Assert.True(items.Mode == mode);
+        Assert.Equal(mode, items.Mode);
         Assert.True(items.CommandArgs.Zip(expectedArgs.ToList()).All(x => x.First.Equals(x.Second)));
 
         if (cmdAliases != null)
@@ -140,9 +140,9 @@ public class ParsingTests
     public void ToolWithAliasTest()
     {
         string cli = "-Srepro -T:A:B 12 13";
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var items = CommandLineParser.Parse(args);
-        Assert.True(items.Mode == EMode.Tool);
+        Assert.Equal(EMode.Tool, items.Mode);
         Assert.Null(items.ToolName);
         Assert.Equal(":A:B", items.CommandAliases[EMode.Tool]);
     }
@@ -152,9 +152,9 @@ public class ParsingTests
     public void ToolWithToolNameTest()
     {
         string cli = "-Srepro -Tname 12 13";
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var items = CommandLineParser.Parse(args);
-        Assert.True(items.Mode == EMode.Tool);
+        Assert.Equal(EMode.Tool, items.Mode);
         Assert.Equal("name", items.ToolName);
         Assert.False(items.CommandAliases.ContainsKey(EMode.Tool));
     }
@@ -166,9 +166,9 @@ public class ParsingTests
     [InlineData("-Srepro -T 12 13", EMode.Tool, "12", "13")]
     public void CommandWithNoAliasTests(string cli, EMode mode, params string[] expectedArgs)
     {
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var items = CommandLineParser.Parse(args);
-        Assert.True(items.Mode == mode);
+        Assert.Equal(mode, items.Mode);
         Assert.False(items.CommandAliases.ContainsKey(mode));
         Assert.True(items.CommandArgs.Zip(expectedArgs.ToList()).All(x => x.First.Equals(x.Second)));
     }
@@ -180,9 +180,9 @@ public class ParsingTests
     [InlineData("-Srepro -A:A:B -A:C:D -- 12 13", EMode.Repl, ":A:B:C:D")]
     public void AArgPassesReplAliases(string cli, EMode mode, string replAliases)
     {
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var items = CommandLineParser.Parse(args);
-        Assert.True(items.Mode == mode);
+        Assert.Equal(mode, items.Mode);
         Assert.Equal(replAliases, items.CommandAliases[EMode.Repl]);
     }
 
@@ -193,7 +193,7 @@ public class ParsingTests
     [InlineData("-Srepro -A:A:B -A:C:D -A:")]
     public void PowerShellWorkaroundFailTests(string cli)
     {
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var cmd = CommandLineParser.Parse(args);
         Assert.True(cmd.IsError);
     }
@@ -205,9 +205,9 @@ public class ParsingTests
     [InlineData("-Srepro -A: A:B -- 12 13", EMode.Repl, ":A:B", "12", "13")]
     public void PowerShellWorkaroundSuccessTests(string cli, EMode mode, string cmdAliases, params string[] expectedArgs)
     {
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var items = CommandLineParser.Parse(args);
-        Assert.True(items.Mode == mode);
+        Assert.Equal(mode, items.Mode);
         Assert.True(items.CommandArgs.Zip(expectedArgs.ToList()).All(x => x.First.Equals(x.Second)));
         Assert.Equal(cmdAliases, items.CommandAliases[mode]);
     }
@@ -219,9 +219,9 @@ public class ParsingTests
     [InlineData("-Srepro -A: A:B -A: C:D -- 12 13", EMode.Repl, ":A:B:C:D")]
     public void PowerShellWorkaroundForASuccessTests(string cli, EMode mode, string replAliases)
     {
-        string[] args = cli.Split(new char[] { ' ' });
+        string[] args = cli.Split([' ']);
         var items = CommandLineParser.Parse(args);
-        Assert.True(items.Mode == mode);
+        Assert.Equal(mode, items.Mode);
         Assert.Equal(replAliases, items.CommandAliases[EMode.Repl]);
     }
 }
