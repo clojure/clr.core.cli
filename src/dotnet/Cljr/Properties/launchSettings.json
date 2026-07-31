@@ -3,7 +3,7 @@
     "Cljr": {
       "commandName": "Project",
       "commandLineArgs": "-Sforce -X:test",
-      "workingDirectory": "C:\\work\\clojure\\clr.tools.namespace"
+      "workingDirectory": "E:\\work\\clojure\\clr.tools.namespace"
     }
   }
 }
