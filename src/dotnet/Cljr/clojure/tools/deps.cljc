@@ -7,26 +7,29 @@
 ;   You must not remove this notice, or any other, from this software.
 
 (ns clojure.tools.deps
+  "API namespace for tools.deps. New dep types are defined via the multimethods
+  in c.t.deps.extensions. This namespace auto-loads the built-in extensions for
+  :mvn, :git, :local, etc. Most functions for reading, validating, and manipulating
+  deps.edn data have been deprecated and moved to clojure.tools.deps.edn library."
   (:require
     #?(:clj [clojure.java.io :as jio]
 	   :cljr [clojure.clr.io :as cio])
     [clojure.set :as set]
     [clojure.string :as str]
+    [clojure.tools.deps.edn :as depsedn]
     [clojure.tools.deps.util.concurrent :as concurrent]
     [clojure.tools.deps.util.dir :as dir]
     [clojure.tools.deps.util.io :as io]
     [clojure.tools.deps.util.session :as session]
-    [clojure.tools.deps.extensions :as ext]
-	[clojure.tools.deps.specs :as specs]
-    [clojure.walk :as walk])
+    [clojure.tools.deps.extensions :as ext])
   (:import
-    [clojure.lang #?(:clj EdnReader$ReaderException :cljr EdnReader+ReaderException)]
     [clojure.lang PersistentQueue]
-    #?(:clj [java.io File InputStreamReader BufferedReader]
+    #?(:clj [java.io File]
 	   :cljr [System.IO  Path FileInfo DirectoryInfo])
     #?(:clj [java.lang ProcessBuilder ProcessBuilder$Redirect] )   ;;; :cljr [System.Diagnostics ProcessStartInfo Process]  -- defer until after we load the dll, if required.
     #?(:clj [java.util List] 
 	   :cljr [System.Collections ArrayList])
+	#?(:clj [java.util.concurrent ConcurrentHashMap ExecutorService])
 	#?(:cljr [System.Threading CancellationTokenSource CancellationToken])   
 	   ))
 
@@ -34,271 +37,67 @@
   (assembly-load-from (str clojure.lang.RT/SystemRuntimeDirectory "System.Diagnostics.Process.dll"))
   (catch Exception e))  ;; failing silently okay -- if we need it and didn't find it, a type reference will fail later
 
-(import '[System.Diagnostics Process ProcessStartInfo])
+(import '[System.Diagnostics Process ProcessStartInfo DataReceivedEventHandler])
 
 (set! *warn-on-reflection* true)
 
-;;;; deps.edn reading
+;; This is needed to pass in the installation directory for looking up root 
+;; Initialized in clojure.run.exec -- WHICH I CANNOT FIND RIGHT NOW.
+;; I need this atom over in clojure.tools.deps.edn, so I define it there and reference it here, 
+;;   where clojure.run.exec can find it.
+(def install-dir depsedn/install-dir)
 
-#?(
-:clj
-(defn- io-err
-  ^Throwable [fmt ^File f]
-  (let [path (.getAbsolutePath f)]
-    (ex-info (format fmt path) {:path path})))
-	
-:cljr
-(defn- io-err
-  ^Exception [fmt ^FileInfo f]
-  (let [path (.FullName f)]
-    (ex-info (format fmt path) {:path path})))
-)	
 
-#?(
-:clj 
-(defn- slurp-edn-map
-  "Read the file specified by the path-segments, slurp it, and read it as edn."
-  [^File f]
-  (let [val (try (io/slurp-edn f)
-                 (catch EdnReader$ReaderException e (throw (io-err (str (.getMessage e) " (%s)") f)))
-                 (catch RuntimeException t
-                   (if (str/starts-with? (.getMessage t) "EOF while reading")
-                     (throw (io-err "Error reading edn, delimiter unmatched (%s)" f))
-                     (throw (io-err (str "Error reading edn. " (.getMessage t) " (%s)") f)))))]
-    (if (specs/valid-deps? val)
-      val
-     (throw (io-err (str "Error reading deps %s. " (specs/explain-deps val)) f)))))
-
-:cljr 
-(defn- slurp-edn-map
-  "Read the file specified by the path-segments, slurp it, and read it as edn."
-  [^FileInfo f]
-  (let [val (try (io/slurp-edn f)
-                 (catch EdnReader+ReaderException e (throw (io-err (str (.Message e) " (%s)") f)))
-                 (catch Exception t
-                   (if (str/starts-with? (.Message t) "EOF while reading")
-                     (throw (io-err "Error reading edn, delimiter unmatched (%s)" f))
-                     (throw (io-err (str "Error reading edn. " (.Message t) " (%s)") f)))))]
-    (if (specs/valid-deps? val)
-      val
-     (throw (io-err (str "Error reading deps %s. " (specs/explain-deps val)) f)))))
-)
-
-;; all this canonicalization is deprecated and will eventually be removed
-
-(defn- canonicalize-sym
-  ([s]
-   (canonicalize-sym s nil))
-  ([s file-name]
-   (if (simple-symbol? s)
-     (let [cs (as-> (name s) n (symbol n n))]
-       (io/printerrln "DEPRECATED: Libs must be qualified, change" s "=>" cs
-         (if file-name (str "(" file-name ")") ""))
-       cs)
-     s)))
-
-(defn- canonicalize-exclusions
-  [{:keys [exclusions] :as coord} file-name]
-  (if (seq (filter simple-symbol? exclusions))
-    (assoc coord :exclusions (mapv #(canonicalize-sym % file-name) exclusions))
-    coord))
-
-(defn- canonicalize-dep-map
-  [deps-map file-name]
-  (when deps-map
-    (reduce-kv (fn [acc lib coord]
-                 (let [new-lib (if (simple-symbol? lib) (canonicalize-sym lib file-name) lib)
-                       new-coord (canonicalize-exclusions coord file-name)]
-                   (assoc acc new-lib new-coord)))
-      {} deps-map)))
-
-(defn- canonicalize-all-syms
-  ([deps-edn]
-   (canonicalize-all-syms deps-edn nil))
-  ([deps-edn file-name]
-   (walk/postwalk
-     (fn [x]
-       (if (map? x)
-         (reduce (fn [xr k]
-                   (if-let [xm (get xr k)]
-                     (assoc xr k (canonicalize-dep-map xm file-name))
-                     xr))
-           x #{:deps :default-deps :override-deps :extra-deps :classpath-overrides})
-         x))
-     deps-edn)))
+;;;; deps.edn reading - moved to clojure.tools.deps.edn
 
 (defn slurp-deps
-  "Read a single deps.edn file from disk and canonicalize symbols,
-  return a deps map. If the file doesn't exist, returns nil."
+  "DEPRECATED: use clojure.tools.deps.edn/read-deps"
+  {:deprecated "1.0"}
   [^#?(:clj File :cljr FileInfo) dep-file]
-  (when (#?(:clj .exists :cljr .Exists) dep-file)
-    (-> dep-file slurp-edn-map (canonicalize-all-syms (#?(:clj .getPath :cljr .FullName) dep-file)))))
+  (depsedn/read-deps dep-file))
 
-(def install-dir (atom nil))
-
-#?(
-:clj 
 (defn root-deps
-  "Read the root deps.edn resource from the classpath at the path
-  clojure/tools/deps/deps.edn"
+  "DEPRECATED: Use clojure.tools.deps.edn/root-deps"
+  {:deprecated "1.0"}
   []
-  (let [url (jio/resource "clojure/tools/deps/deps.edn")]
-    (io/read-edn (BufferedReader. (InputStreamReader. (.openStream url))))))
-	
-:cljr
-(defn root-deps
-  "Read the root deps.edn resource from the classpath at the path
-  clojure/tools/deps/deps.edn"
-  []
-  (io/read-edn (.OpenText (cio/file-info @install-dir "clojure/tools/deps/deps.edn"))))
-)
-
-(def directory-separator 
-  #?(:clj File/separator
-     :cljr Path/DirectorySeparatorChar))
-	 
-(defn get-user-home []
-  #?(:clj (System/getProperty "user.home")
-     :cljr (System.Environment/GetFolderPath System.Environment+SpecialFolder/UserProfile)))
-	 
-(defn get-env-var [^String env-var]
-  ( #?(:clj System/getenv 
-       :cljr Environment/GetEnvironmentVariable)  env-var))
-#?(
-:clj
+  (depsedn/root-deps))
 
 (defn user-deps-path
-  "Use the same logic as clj to calculate the location of the user deps.edn.
-  Note that it's possible no file may exist at this location."
+  "DEPRECATED: Use clojure.tools.deps.edn/user-deps-path"
+  {:deprecated "1.0"}
   []
-  (let [config-env (get-env-var "CLJ_CONFIG")
-        xdg-env (get-env-var "XDG_CONFIG_HOME")
-        home (get-user-home)
-        config-dir (cond config-env config-env
-                         xdg-env (str xdg-env directory-separator "clojure")
-                         :else (str home directory-separator ".clojure"))]
-    (str config-dir directory-separator "deps.edn")))
-
-:cljr
-
-(defn user-deps-path
-  "Use the same logic as clj to calculate the location of the user deps.edn.
-  Note that it's possible no file may exist at this location."
-  ([] 
-    (user-deps-path "deps-clr.edn"))
-  ([filename]
-    (let [config-env (get-env-var "CLJ_CONFIG")
-          xdg-env (get-env-var "XDG_CONFIG_HOME")
-          home (get-user-home)
-          config-dir (cond config-env config-env
-                           xdg-env (str xdg-env directory-separator "clojure")
-                           :else (str home directory-separator ".clojure"))]
-      (str config-dir directory-separator filename))))
-
-)
-#?(
-:clj
-
+  (depsedn/user-deps-path))
+  
 (defn find-edn-maps
-  "Finds and returns standard deps edn maps in a map with keys
-    :root-edn, :user-edn, :project-edn
-  If no project-edn is supplied, use the deps.edn in current directory"
+  "DEPRECATED: Use clojure.tools.deps.edn/create-edn-maps (note api differs)"
+  {:deprecated "1.0"}
+
   ([]
    (find-edn-maps nil))
   ([project-edn-file]
-   (let [user-loc (jio/file (user-deps-path))
-         project-loc (jio/file (if project-edn-file project-edn-file (str dir/*the-dir* directory-separator "deps.edn")))]
-     (cond-> {:root-edn (root-deps)}
-       (.exists user-loc) (assoc :user-edn (slurp-deps user-loc))
-       (.exists project-loc) (assoc :project-edn (slurp-deps project-loc))))))
-	   
-:cljr
+   (let [key-adapter {:root :root-edn, :user :user-edn, :project :project-edn}]
+     (-> (depsedn/create-edn-maps (when project-edn-file {:project project-edn-file}))
+       (update-keys key-adapter)))))  
 
-(defn find-edn-maps
-  "Finds and returns standard deps edn maps in a map with keys
-    :root-edn, :user-edn, :project-edn
-  If no project-edn is supplied, use the deps.edn in current directory"
-  ([]
-   (find-edn-maps nil))
-  ([project-edn-file]
-   (let [user-loc1 (cio/file-info (user-deps-path "deps-clr.edn"))
-         user-loc2 (cio/file-info (user-deps-path "deps.edn"))
-		 user-loc (cond (.Exists user-loc1) user-loc1
-		                (.Exists user-loc2) user-loc2
-						:else user-loc1)
-		 project-loc1 (cio/file-info (str dir/*the-dir* directory-separator "deps-clr.edn"))
-		 project-loc2 (cio/file-info (str dir/*the-dir* directory-separator "deps.edn"))
-		 project-loc (cond (.Exists project-loc1) project-loc1
-		                   (.Exists project-loc2) project-loc2
-						   :else project-loc1)]
-     (cond-> {:root-edn (root-deps)}
-       (.Exists user-loc) (assoc :user-edn (slurp-deps user-loc))
-       (.Exists project-loc) (assoc :project-edn (slurp-deps project-loc))))))
-	   
-)
-
-(defn- merge-or-replace
-  "If maps, merge, otherwise replace"
-  [& vals]
-  (when (some identity vals)
-    (reduce (fn [ret val]
-              (if (and (map? ret) (map? val))
-                (merge ret val)
-                (or val ret)))
-      nil vals)))
+(defn create-edn-maps
+  "DEPRECATED - use clojure.tools.deps.edn/create-edn-maps"
+  {:deprecated "1.0"}
+  [params]
+  (depsedn/create-edn-maps params))
 
 (defn merge-edns
-  "Merge multiple deps edn maps from left to right into a single deps edn map."
+  "DEPRECATED: Use clojure.tools.deps.edn/merge-edns"
+  {:deprecated "1.0"}
   [deps-edn-maps]
-  (apply merge-with merge-or-replace (remove nil? deps-edn-maps)))
+  (depsedn/merge-edns deps-edn-maps))
 
 ;;;; Aliases
 
-;; per-key binary merge-with rules
-
-(def ^:private last-wins (comp last #(remove nil? %) vector))
-(def ^:private append (comp vec concat))
-(def ^:private append-unique (comp vec distinct concat))
-
-(def ^:private merge-alias-rules
-  {:deps merge ;; FUTURE: remove
-   :replace-deps merge ;; formerly :deps
-   :extra-deps merge
-   :override-deps merge
-   :default-deps merge
-   :classpath-overrides merge
-   :paths append-unique ;; FUTURE: remove
-   :replace-paths append-unique ;; formerly :paths
-   :extra-paths append-unique
-   :jvm-opts append
-   :main-opts last-wins
-   :exec-fn last-wins
-   :exec-args merge-or-replace
-   :ns-aliases merge
-   :ns-default last-wins})
-
-(defn- choose-rule [alias-key val]
-  (or (merge-alias-rules alias-key)
-    (if (map? val)
-      merge
-      (fn [_v1 v2] v2))))
-
-(defn- merge-alias-maps
-  "Like merge-with, but using custom per-alias-key merge function"
-  [& ms]
-  (reduce
-    #(reduce
-       (fn [m [k v]] (update m k (choose-rule k v) v))
-       %1 %2)
-    {} ms))
-
 (defn combine-aliases
-  "Find, read, and combine alias maps identified by alias keywords from
-  a deps edn map into a single args map."
+  "DEPRECATED: Use clojure.tools.deps.edn/combine-aliases"
+  {:deprecated "1.0"}
   [edn-map alias-kws]
-  (->> alias-kws
-    (map #(get-in edn-map [:aliases %]))
-    (apply merge-alias-maps)))
+  (depsedn/combine-aliases edn-map alias-kws))
 
 (defn lib-location
   "Find the file path location of where a lib/coord would be located if procured
@@ -334,9 +133,8 @@
          :cut' (assoc cut [lib coord-id] coord-excl)
          :child-pred (fn [lib] (not (contains? coord-excl lib)))})
 
-      ;; if seeing same lib/ver again, narrow exclusions to intersection of prior and new.
-      ;; only include new unexcluded children (old excl set minus new excl set)
-      ;; as others were already enqueued when first added
+      ;; if seeing same lib/ver again, narrow exclusions to intersection of prior and new,
+      ;; must reconsider previously included children as prev parent may get omitted
       (= reason :same-version)
       (let [exclusions' (if (seq coord-excl) (assoc exclusions use-path coord-excl) exclusions)
             cut-coord (get cut [lib coord-id]) ;; previously cut from this lib, so were not enqueued
@@ -345,6 +143,7 @@
         {:exclusions' exclusions'
          :cut' (assoc cut [lib coord-id] new-cut)
          :child-pred (set enq-only)})
+         ;:child-pred (fn [lib] (not (contains? new-cut lib)))})
 
       :else ;; otherwise, no change
       {:exclusions' exclusions, :cut' cut})))
@@ -390,16 +189,21 @@
   "Is any part of the parent path missing from the selected lib/versions?
   This can happen if a newer version was found, orphaning previously selected children."
   [vmap parent-path]
-  (when (seq parent-path)
-    (loop [path parent-path]
-      (if (seq path)
-        (let [lib (last path)
-              check-path (vec (butlast path))
-              {:keys [paths select]} (get vmap lib)]
-          (if (contains? (get paths select) check-path)
-            (recur check-path)
-            true))
-        false))))
+  (loop [path parent-path
+         more-paths nil]
+    (if (seq path)
+      (let [lib (last path)
+            check-path (vec (butlast path))
+            {:keys [paths select]} (get vmap lib)
+            paths-to-selected (get paths select)]
+        (if (contains? paths-to-selected check-path)
+          ;; add alternative paths to root that include the selected lib
+          (recur check-path (concat more-paths (remove #(= % check-path) paths-to-selected)))
+          (if (seq more-paths)
+            ;; consider alternative paths before considering lib to be omitted
+            (recur (first more-paths) (rest more-paths))
+            true)))
+      false)))
 
 (defn- deselect-orphans
   "For the given paths, deselect any libs whose only selected version paths are in omitted-paths"
@@ -503,44 +307,50 @@
 (defn- expand-deps
   "Dep tree expansion, returns version map"
   [deps default-deps override-deps config executor trace?]
-  (letfn [(err-handler [throwable]
-            (do
-              (concurrent/shutdown-on-error executor)
-              (throw ^Throwable throwable)))
-          (children-task [lib use-coord use-path child-pred]
-            {:pend-children
-             (let [{:deps/keys [manifest root]} use-coord]
-               (dir/with-dir (if root (jio/file root) dir/*the-dir*)
-                 (concurrent/submit-task executor
-                   #(try
-                      (canonicalize-deps (ext/coord-deps lib use-coord manifest config) config)
-                      (catch Throwable t t)))))
-             :ppath use-path
-             :child-pred child-pred})]
-    (loop [pendq nil ;; a resolved child-lookup thunk to look at first
-           q (into PersistentQueue/EMPTY (map vector deps)) ;; queue of nodes or child-lookups
-           version-map nil ;; track all seen versions of libs and which version is selected
-           exclusions nil ;; tracks exclusions marked in the tree
-           cut nil ;; tracks cuts made of child nodes based on exclusions
-           trace []] ;; trace expansion
-      (let [{:keys [path pendq q']} (next-path pendq q err-handler)]
-        (if path
-          (let [[lib coord] (peek path)
-                parents (pop path)
-                use-path (conj parents lib)
-                override-coord (get override-deps lib)
-                choose-coord (cond override-coord override-coord
-                                   coord coord
-                                   :else (get default-deps lib))
-                use-coord (merge choose-coord (ext/manifest-type lib choose-coord config))
-                coord-id (ext/dep-id lib use-coord config)
-                {:keys [include reason vmap]} (include-coord? version-map lib use-coord coord-id parents exclusions config)
-                ;_ (println "loop" lib coord-id "include=" include "reason=" reason)
-                {:keys [exclusions' cut' child-pred]} (update-excl lib use-coord coord-id use-path include reason exclusions cut)
-                new-q (if child-pred (conj q' (children-task lib use-coord use-path child-pred)) q')]
-            (recur pendq new-q vmap exclusions' cut'
-              (trace+ trace? trace parents lib coord use-coord coord-id override-coord include reason)))
-          (cond-> version-map trace? (with-meta {:trace {:log trace, :vmap version-map, :exclusions exclusions}})))))))
+  (let [memoized-deps (ConcurrentHashMap. 100)]
+    (letfn [(err-handler [throwable]
+              (do
+                (concurrent/shutdown-on-error executor)
+                (throw ^Throwable throwable)))
+            (children-task [lib use-coord use-path child-pred]
+              {:pend-children
+               (let [{:deps/keys [manifest root]} use-coord]
+                 (dir/with-dir (if root (jio/file root) dir/*the-dir*)
+                   (concurrent/submit-task executor
+                     #(try
+                        (let [k [lib use-coord]]
+                          (or
+                            (.get memoized-deps k)
+                            (let [child-deps (canonicalize-deps (ext/coord-deps lib use-coord manifest config) config)]
+                              (.putIfAbsent memoized-deps k child-deps)
+                              child-deps)))
+                        (catch Throwable t t)))))
+               :ppath use-path
+               :child-pred child-pred})]
+      (loop [pendq nil ;; a resolved child-lookup thunk to look at first
+             q (into PersistentQueue/EMPTY (map vector deps)) ;; queue of nodes or child-lookups
+             version-map nil ;; track all seen versions of libs and which version is selected
+             exclusions nil ;; tracks exclusions marked in the tree
+             cut nil ;; tracks cuts made of child nodes based on exclusions
+             trace []] ;; trace expansion
+        (let [{:keys [path pendq q']} (next-path pendq q err-handler)]
+          (if path
+            (let [[lib coord] (peek path)
+                  parents (pop path)
+                  use-path (conj parents lib)
+                  override-coord (get override-deps lib)
+                  choose-coord (cond override-coord override-coord
+                                     coord coord
+                                     :else (get default-deps lib))
+                  use-coord (merge choose-coord (ext/manifest-type lib choose-coord config))
+                  coord-id (ext/dep-id lib use-coord config)
+                  {:keys [include reason vmap]} (include-coord? version-map lib use-coord coord-id parents exclusions config)
+                  ; _ (println "loop" lib coord-id "include=" include "reason=" reason)
+                  {:keys [exclusions' cut' child-pred]} (update-excl lib use-coord coord-id use-path include reason exclusions cut)
+                  new-q (if child-pred (conj q' (children-task lib use-coord use-path child-pred)) q')]
+              (recur pendq new-q vmap exclusions' cut'
+                (trace+ trace? trace parents lib coord use-coord coord-id override-coord include reason)))
+            (cond-> version-map trace? (with-meta {:trace {:log trace, :vmap version-map, :exclusions exclusions}}))))))))
 		  
 :cljr
 
@@ -549,45 +359,52 @@
   [deps default-deps override-deps config executor trace?]
   (with-open [cts (CancellationTokenSource.)]
     (let [tf (concurrent/create-task-factory (.Token cts))]
-      (letfn [(err-handler [throwable]
-                (do
-                  (.Cancel cts)
-                  (throw ^Exception throwable)))
+	  (let [memoized-deps (|System.Collections.Concurrent.ConcurrentDictionary[System.Object,System.Object]|/new)]          ;;; Someday, use the new syntax for types
+        (letfn [(err-handler [throwable]
+                  (do
+                    (.Cancel cts)
+                    (throw ^Exception throwable)))
 				
-              (children-task [lib use-coord use-path child-pred]
-                {:pend-children
-                 (let [{:deps/keys [manifest root]} use-coord]
-                   (dir/with-dir (if root (cio/dir-info root) dir/*the-dir*)
-                     (concurrent/submit-task tf
-                       #(try
-                          (canonicalize-deps (ext/coord-deps lib use-coord manifest config) config)
-                          (catch Exception t t)))))
-                 :ppath use-path
-                 :child-pred child-pred})]
-        (loop [pendq nil ;; a resolved child-lookup thunk to look at first
-               q (into PersistentQueue/EMPTY (map vector deps)) ;; queue of nodes or child-lookups
-               version-map {} ;; track all seen versions of libs and which version is selected
-               exclusions nil ;; tracks exclusions marked in the tree
-               cut nil ;; tracks cuts made of child nodes based on exclusions
-               trace []] ;; trace expansion
-          (let [{:keys [path pendq q']} (next-path pendq q err-handler)]
-            (if path
-              (let [[lib coord] (peek path)
-                    parents (pop path)
-                    use-path (conj parents lib)
-                    override-coord (get override-deps lib)
-                    choose-coord (cond override-coord override-coord
-                                       coord coord
-                                       :else (get default-deps lib))
-                    use-coord (merge choose-coord (ext/manifest-type lib choose-coord config))
-                    coord-id (ext/dep-id lib use-coord config)
-                  {:keys [include reason vmap]} (include-coord? version-map lib use-coord coord-id parents exclusions config)
-                  ;_ (println "loop" lib coord-id "include=" include "reason=" reason)
-                  {:keys [exclusions' cut' child-pred]} (update-excl lib use-coord coord-id use-path include reason exclusions cut)
-                  new-q (if child-pred (conj q' (children-task lib use-coord use-path child-pred)) q')]
-                (recur pendq new-q vmap exclusions' cut'
-                  (trace+ trace? trace parents lib coord use-coord coord-id override-coord include reason)))
-              (cond-> version-map trace? (with-meta {:trace {:log trace, :vmap version-map, :exclusions exclusions}})))))))))
+                (children-task [lib use-coord use-path child-pred]
+                  {:pend-children
+                   (let [{:deps/keys [manifest root]} use-coord]
+                     (dir/with-dir (or root dir/*the-dir*)                                          ;;; Do not call cio/file-infow with dir/with-dir -- it calls canonicalize
+                       (concurrent/submit-task tf
+                         #(try
+					        (let [k [lib use-coord]
+							      v nil]
+							   (if (.TryGetValue memoized-deps k (by-ref v))
+							     v
+								 (let [child-deps (canonicalize-deps (ext/coord-deps lib use-coord manifest config) config)]
+								   (.GetOrAdd memoized-deps k child-deps)
+								   child-deps)))
+                            (catch Exception t t)))))
+                   :ppath use-path
+                   :child-pred child-pred})]
+          (loop [pendq nil ;; a resolved child-lookup thunk to look at first
+                 q (into PersistentQueue/EMPTY (map vector deps)) ;; queue of nodes or child-lookups
+                 version-map {} ;; track all seen versions of libs and which version is selected
+                 exclusions nil ;; tracks exclusions marked in the tree
+                 cut nil ;; tracks cuts made of child nodes based on exclusions
+                 trace []] ;; trace expansion
+            (let [{:keys [path pendq q']} (next-path pendq q err-handler)]
+              (if path
+                (let [[lib coord] (peek path)
+                      parents (pop path)
+                      use-path (conj parents lib)
+                      override-coord (get override-deps lib)
+                      choose-coord (cond override-coord override-coord
+                                         coord coord
+                                         :else (get default-deps lib))
+                      use-coord (merge choose-coord (ext/manifest-type lib choose-coord config))
+                      coord-id (ext/dep-id lib use-coord config)
+                    {:keys [include reason vmap]} (include-coord? version-map lib use-coord coord-id parents exclusions config)
+                    ;_ (println "loop" lib coord-id "include=" include "reason=" reason)
+                    {:keys [exclusions' cut' child-pred]} (update-excl lib use-coord coord-id use-path include reason exclusions cut)
+                    new-q (if child-pred (conj q' (children-task lib use-coord use-path child-pred)) q')]
+                  (recur pendq new-q vmap exclusions' cut'
+                    (trace+ trace? trace parents lib coord use-coord coord-id override-coord include reason)))
+                (cond-> version-map trace? (with-meta {:trace {:log trace, :vmap version-map, :exclusions exclusions}}))))))))))
 			  
 )
 
@@ -820,8 +637,9 @@
   (-> (make-classpath-map {:paths paths} lib-map classpath-args) :classpath-roots join-classpath))
 
 (defn tool
-  "Transform project edn for tool by applying tool args (keys = :paths, :deps) and
-  returning an updated project edn."
+  "Replaces project-edn :deps and :paths with tool :deps and :paths
+  and returns a new project-edn map.
+  (Also supports :replace-deps and :replace-paths as aliases.)"
   [project-edn tool-args]
   (let [{:keys [replace-deps replace-paths deps paths]} tool-args]
     (cond-> project-edn
@@ -875,22 +693,41 @@
   [^DirectoryInfo dir classpath f args]
   ;; clojure.main  clojure.main -e '(do (if-let [resolved-f (requiring-resolve 'f)] (resolved-f nil) (System/exit 1)) nil)'
   ;; with CLOJURE_LOAD_PATH set to classpath
-  (let [command "clojure.main"
-        command-args ["-e" 
-	               (str "(do (if-let [resolved-f (requiring-resolve '"
+   (let [eval-form (str "(do (if-let [resolved-f (requiring-resolve '"
                           f
                           ")] (resolved-f "
                            (pr-str args)
-                           ") (Environment/Exit 1)) nil)")]
-	    proc-builder (doto (ProcessStartInfo. command (clojure.string/join " " command-args))
-		                (.set_RedirectStandardError true)
+                           ") (Environment/Exit 1)) nil)")
+        command-args (into-array String ["-e" eval-form])
+        user-profile (Environment/GetFolderPath Environment+SpecialFolder/UserProfile)
+        shim (Path/Combine user-profile ".dotnet" "tools" "clojure.main.exe")
+	    psi (doto (ProcessStartInfo. shim ^String/1 command-args)
+						(.set_RedirectStandardError true)
 			            (.set_RedirectStandardOutput true)
-						(.set_WorkingDirectory dir)
+						(.set_WorkingDirectory (.FullName dir))
                         (.set_UseShellExecute false))
-		_ (.Add (.EnvironmentVariables proc-builder) "CLOJURE_LOAD_PATH" classpath)
-        proc (Process/Start proc-builder)]
-	  (.WaitForExit proc)
-	  (.ExitCode proc)))
+		_ (.set_Item (.EnvironmentVariables psi)"CLOJURE_LOAD_PATH" classpath)		
+        proc (doto (Process.)
+		       (.set_StartInfo psi)
+
+               ;;;; stdout
+               ;;(.add_OutputDataReceived 
+               ;;  (gen-delegate DataReceivedEventHandler [sender e]
+               ;;    (when-let [line (.Data e)]
+               ;;      (println "[stdout]" line))))
+
+               ;;;; stderr
+               ;;(.add_ErrorDataReceived proc
+               ;;  (gen-delegate DataReceivedEventHandler [sender e]
+               ;;   (when-let [line (.Data e)]
+               ;;     (println "[stderr]" line))))
+			   )]
+			   
+    (.Start proc)
+    ;;(.BeginOutputReadLine )
+    ;;(.BeginErrorReadLine )
+    (.WaitForExit proc)
+	(.ExitCode proc)))
 
 )
 
@@ -909,26 +746,26 @@
               :info  - print only when prepping
               :debug - :info + print for each lib considered"
   [lib-map {:keys [action current log] :or {current false}} config]
-  (let [local-dir (#?(:clj .getAbsolutePath :cljr .FullName)(dir/canonicalize (#?(:clj jio/file :cljr cio/file-info) ".")))
+  (let [local-dir (#?(:clj .getAbsolutePath :cljr .FullName)(dir/canonicalize (#?(:clj jio/file :cljr identity) ".")))  ;;; CLR: For dir/canonicalize to work, pass it a string
         unprepped
         (reduce-kv
          (fn [ret lib {:deps/keys [root manifest] :as coord}]
            (if-let [{f :fn, :keys [alias ensure exec-args]} (ext/prep-command lib coord manifest config)]
-             (let [ensure-dir (when ensure (#?(:clj jio/file :cljr cio/file-info)root ensure))
-                   unprepped (and ensure (not (#?(:clj .exists :cljr .Exists) ^#?(:clj File  :cljr FileInfo) ensure-dir)))]
+             (let [ensure-dir (when ensure (#?(:clj jio/file :cljr cio/dir-info) root ensure))
+                   unprepped (and ensure (not (#?(:clj .exists :cljr .Exists) ^#?(:clj File  :cljr DirectoryInfo) ensure-dir)))]
                (when (#{:debug} log) (println lib "-" (if unprepped "unprepped" "prepped")))
                (if (or (= action :force) (and unprepped (= action :prep)))
                  (do
                    (when (#{:info :debug} log) (println "Prepping" lib "in" root))
-                   (let [root-dir (#?(:clj jio/file :cljr cio/file-info) root)]
+                   (let [root-dir (#?(:clj jio/file :cljr identity) root)]             ;;; Will be passed to dir/with-dir, which will canonicalize -- do not pass a cio/file-info.
                      (dir/with-dir root-dir
                        (let [basis (create-basis
                                     {:project :standard ;; deps.edn at root
-                                     :extra {:aliases {:deps/TOOL {:replace-deps {} :replace-paths ["."]}}}
-                                     :aliases [:deps/TOOL alias]})
+                                     :args {:replace-deps {} :replace-paths ["."]}
+                                     :aliases [alias]})
                              cp (join-classpath (:classpath-roots basis))
                              qual-f (qualify-fn f (get-in basis [:aliases alias]))
-                             exit (exec-prep! root-dir cp qual-f exec-args)]
+                             exit (exec-prep! dir/*the-dir* cp qual-f exec-args)]
                          (cond
                            (zero? exit) ret
                            (= exit 1) (throw (ex-info (format "Prep function could not be resolved: %s" qual-f) {:lib lib}))
@@ -975,93 +812,6 @@
            cp (make-classpath-map merged-edn libs classpath-args)]
        (merge merged-edn {:libs libs} cp)))))
 
-;(defn runtime-basis
-;  "Load the runtime execution basis context and return it."
-;  []
-;  (when-let [f (jio/file (System/getProperty "clojure.basis"))]
-;    (if (and f (.exists f))
-;      {:basis (slurp-deps f)}
-;      (throw (IllegalArgumentException. "No basis declared in clojure.basis system property")))))
-
-(defn- choose-deps
-  [requested standard-fn]
-  (cond
-    (= :standard requested) (standard-fn)
-    (string? requested) (-> requested #?(:clj jio/file :cljr identity) dir/canonicalize slurp-deps)
-    (or (nil? requested) (map? requested)) requested
-    :else (throw (ex-info (format "Unexpected dep source: %s" (pr-str requested))
-                   {:requested requested}))))
-
-#?(
-:clj
-
-(defn create-edn-maps
-  "Create a set of edn maps from the standard dep sources and return
-   them in a map with keys :root :user :project :extra"
-  [{:keys [root user project extra] :as params
-    :or {root :standard, user :standard, project :standard}}]
-  (let [root-edn (choose-deps root #(root-deps))
-        user-edn (choose-deps user #(-> (user-deps-path) jio/file dir/canonicalize slurp-deps))
-        project-edn (choose-deps project #(-> "deps.edn" jio/file dir/canonicalize slurp-deps))
-        extra-edn (choose-deps extra (constantly nil))]
-    (cond-> {}
-      root-edn (assoc :root root-edn)
-      user-edn (assoc :user user-edn)
-      project-edn (assoc :project project-edn)
-      extra-edn (assoc :extra extra-edn))))
-
-:cljr
-
-(defn create-edn-maps
-  "Create a set of edn maps from the standard dep sources and return
-   them in a map with keys :root :user :project :extra"
-  [{:keys [root user project extra] :as params
-    :or {root :standard, user :standard, project :standard}}]
-  (let [root-edn (choose-deps root #(root-deps))
-        user-edn (choose-deps user #(or (-> (user-deps-path "deps-clr.edn") dir/canonicalize slurp-deps)
-		                                (-> (user-deps-path "deps-clr.edn") dir/canonicalize slurp-deps)))
-        project-edn (choose-deps project #(or 
-											(-> "deps-clr.edn" dir/canonicalize slurp-deps)	
-											(-> "deps.edn" dir/canonicalize slurp-deps)))
-        extra-edn (choose-deps extra (constantly nil))]
-    (cond-> {}
-      root-edn (assoc :root root-edn)
-      user-edn (assoc :user user-edn)
-      project-edn (assoc :project project-edn)
-      extra-edn (assoc :extra extra-edn))))
-	
-)
-
-	
-#?(
-:clj	  
-(defmacro ^:private in-project-dir
-  "If project deps.edn is not in the current dir, push project directory
-  into current directory context while creating basis. Local deps use paths
-  relative to project dir. Use anaphoric 'assumed-project in body."
-  [project-deps & body]
-  `(if (and (instance? String ~project-deps)
-        (not (.equals dir/*the-dir* (.getParentFile (jio/file ~project-deps)))))
-     (dir/with-dir (.getParentFile (jio/file ~project-deps))
-       (let [~'assumed-project (.getName (jio/file ~project-deps))]
-         ~@body))
-     (let [~'assumed-project ~project-deps]
-       ~@body)))	  
-	 
-:cljr
-(defmacro ^:private in-project-dir
-  "If project deps.edn is not in the current dir, push project directory
-  into current directory context while creating basis. Local deps use paths
-  relative to project dir. Use anaphoric 'assumed-project in body."
-  [project-deps & body]
-  `(if (and (instance? String ~project-deps)
-        (not (.Equals dir/*the-dir* (.Directory (cio/file-info ~project-deps)))))
-     (dir/with-dir (.Directory (cio/file-info ~project-deps))
-       (let [~'assumed-project (.Name (cio/file-info ~project-deps))]
-         ~@body))
-     (let [~'assumed-project ~project-deps]
-       ~@body))) 
-)
 
 (defn create-basis
   "Create a basis from a set of deps sources and a set of aliases. By default, use
@@ -1071,15 +821,18 @@
    Each dep source value can be :standard, a string path, a deps edn map, or nil.
    Sources are merged in the order - :root, :user, :project, :extra.
 
-   Aliases refer to argmaps in the merged deps that will be supplied to the basis
-   subprocesses (tool, resolve-deps, make-classpath-map).
+   When resolving deps and forming the classpath, different steps need various
+   args. These are pulled from the 'argmap' which is a merged set of args
+   selected by the aliases and optionally a map of args.
 
    Options:
+     :dir     - directory root path, defaults to current directory   
      :root    - dep source, default = :standard
      :user    - dep source, default = :standard
-     :project - dep source, default = :standard (\"./deps.edn\")
+     :project - dep source, default = :standard (\"deps.edn\")
      :extra   - dep source, default = nil
      :aliases - coll of aliases, default = nil
+     :args    - extra map of argmap args, merged after aliases
 
    The following subprocess argmap args can be provided:
      Key                  Subproc             Description
@@ -1097,33 +850,28 @@
     :libs - lib map, per resolve-deps
     :classpath - classpath map per make-classpath-map
     :classpath-roots - vector of paths in classpath order"
-  [{:keys [root user project extra aliases] :as params}]
-  (in-project-dir project 
-    (let [project assumed-project ;; use anaphoric for project deps in context of project dir
-          params (cond-> params (contains? params :project) (assoc :project project))
-
-          basis-config (cond-> nil
-                         (contains? params :root) (assoc :root root)
-                         (contains? params :project) (assoc :project project)
-                         (contains? params :user) (assoc :user user)
-                         (contains? params :extra) (assoc :extra extra)
+  [{:keys [dir root user project extra aliases args] :as params}]
+  (dir/with-dir #?(:clj (jio/file (or dir ".")) :cljr (or dir "."))                        ;;; do not call cio/file-info -- dir/with-dir will canonicalize the string
+    (let [basis-config (cond-> (select-keys params [:root :project :user :extra :args])
                          (seq aliases) (assoc :aliases (vec aliases)))
 
           {root-edn :root user-edn :user project-edn :project extra-edn :extra} (create-edn-maps params)
           edn-maps [root-edn user-edn project-edn extra-edn]
 
-            alias-data (->> edn-maps
+          alias-data (->> edn-maps
                           (map :aliases)
                           (remove nil?)
                           (apply merge-with merge))
           argmap-data (->> aliases
                            (remove nil?)
                            (map #(get alias-data %)))
-          argmap (apply merge-alias-maps argmap-data)
+         argmap (apply depsedn/merge-alias-maps (concat argmap-data [args]))
   
           project-tooled-edn (tool project-edn argmap)
-          merged-edn (merge-edns [root-edn user-edn project-tooled-edn extra-edn])
-          basis (calc-basis merged-edn {:resolve-args argmap, :classpath-args argmap})]
+          merged-edn (depsedn/merge-edns [root-edn user-edn project-tooled-edn extra-edn])
+          basis (if (:skip-cp argmap) ;; UNSUPPORTED, USE AT YOUR OWN RISK
+                  (assoc merged-edn :argmap argmap)
+                  (calc-basis merged-edn {:resolve-args argmap, :classpath-args argmap}))]
       (cond-> (assoc basis :basis-config basis-config)
         (pos? (count argmap)) (assoc :argmap argmap)))))
 
@@ -1219,6 +967,9 @@
                :mvn/repos (merge mvn/standard-repos {"datomic-cloud" {:url "s3://datomic-releases-1fc2183a/maven/releases"}})}
     nil)
 
+  (create-basis
+    {:user {} :project {} :aliases [:deps] :args {:ns-default 'foo}})
+	
   (print-tree
     (resolve-deps {:deps {'org.clojure/clojure {:mvn/version "1.8.0"}
                           'org.clojure/core.memoize {:mvn/version "0.5.8"}}

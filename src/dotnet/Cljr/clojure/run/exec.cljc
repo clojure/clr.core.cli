@@ -201,7 +201,7 @@
 #?(:cljr
 
 (defn set-install-dir [] 
-   (let [install-dir (Environment/GetEnvironmentVariable "clojure.cli.install-dir")]
+   (let [install-dir (Environment/GetEnvironmentVariable "clojure.cli.install_dir")]
 	 (when install-dir
 	   (reset! deps/install-dir install-dir))))
 )

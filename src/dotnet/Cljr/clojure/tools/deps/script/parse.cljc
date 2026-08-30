@@ -8,11 +8,13 @@
 
 (ns ^{:skip-wiki true}
   clojure.tools.deps.script.parse
+  "Command line parsing utilities.
+  IMPL namespace, subject to change without warning."
   (:require
     #?(:clj [clojure.java.io :as jio] :cljr [clojure.clr.io :as cio])
     [clojure.string :as str]
     [clojure.edn :as edn]
-    [clojure.tools.deps :as deps])
+    [clojure.tools.deps.edn :as depsedn])
   (:import
     #?(:clj [java.io File] :cljr [System.IO FileInfo])))
 
@@ -49,5 +51,8 @@
 (defn parse-config
   "Parses a string of edn into a deps map."
   [s]
-  (#'deps/canonicalize-all-syms  ;; to be removed in the future
-    (edn/read-string {:default tagged-literal} s)))
+  (depsedn/canonicalize
+    (cond
+      (str/blank? s) (throw (ex-info "-Sdeps must be non-blank" {}))
+      (str/starts-with? (str/trim s) "{") (edn/read-string {:default tagged-literal} s)
+      :else s)))

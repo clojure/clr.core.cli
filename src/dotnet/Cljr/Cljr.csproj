@@ -22,9 +22,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Remove="clojure\**"/>
-        <None Remove="example-deps.edn"/>
-        <None Remove="tools\**"/>
+        <None Remove="clojure\**" />
+        <None Remove="example-deps.edn" />
+        <None Remove="tools\**" />
     </ItemGroup>
 
     <ItemGroup>

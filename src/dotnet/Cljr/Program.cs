@@ -186,7 +186,6 @@ if (stale || cliArgs.HasFlag("pom"))
         toolsArgs.Add("--tree");
 }
 
-
 // If stale, run make-classpath to refresh cached classpath
 if (stale && !cliArgs.HasFlag("describe"))
 {
@@ -231,6 +230,7 @@ if (stale && !cliArgs.HasFlag("describe"))
             env: new()
             {
                 ["CLOJURE_LOAD_PATH"] = installDir,
+                ["clojure.cli.install_dir"] = installDir
             }
         );
 
@@ -322,7 +322,7 @@ else
                 ["CLOJURE_LOAD_PATH"] =
                     $"{classpath}{Path.PathSeparator}{installDir}", // TODO -- what is this? need to get the equivalent of exec.jar on the load path
                 ["clojure.basis"] = basisFile,
-                ["clojure.cli.install-dir"] = installDir,
+                ["clojure.cli.install_dir"] = installDir,
             }
         );
 

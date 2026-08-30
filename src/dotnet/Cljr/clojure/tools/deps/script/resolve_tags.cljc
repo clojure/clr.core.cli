@@ -8,12 +8,15 @@
 
 (ns ^{:skip-wiki true}
   clojure.tools.deps.script.resolve-tags
+  "Implements the Clojure CLI tag resolver.
+  IMPL namespace, subject to change without warning.
+  Likely to move to CLI code base in the future."  
   (:require
     #?(:clj [clojure.java.io :as jio]
 	   :cljr [clojure.clr.io :as cio])
     [clojure.pprint :as pp]
     [clojure.walk :as walk]
-    [clojure.tools.deps :as deps]
+    [clojure.tools.deps.edn :as depsedn]
     [clojure.tools.deps.extensions.git :as git]
     [clojure.tools.deps.util.io :refer [printerrln]]
     [clojure.tools.gitlibs :as gitlibs]
@@ -60,7 +63,7 @@
 (defn exec
   [{:keys [deps-file]}]
   (try
-    (let [deps-map (deps/slurp-deps (#?(:clj jio/file :cljr cio/file-info) deps-file))
+    (let [deps-map (depsedn/read-deps (#?(:clj jio/file :cljr cio/file-info) deps-file))
           counter (atom 0)]
       (printerrln "Resolving git tags in" deps-file "...")
       (let [resolved-map (resolve-git-deps counter deps-map)]

@@ -8,6 +8,8 @@
 
 (ns ^{:skip-wiki true}
   clojure.tools.deps.extensions
+  "Defines the SPI for new dep and manifest types - to implement, extend the
+  multimethods here, then load those extensions before using the tools.deps API."
   (:require
     #?(:clj [clojure.java.io :as jio]
 	   :cljr [clojure.clr.io :as cio])
@@ -211,7 +213,10 @@
   (throw-bad-manifest lib coord manifest-type))
 
 (comment
-  (require '[clojure.tools.deps.util.maven :as maven])
+  (require
+    '[clojure.tools.deps.extensions.maven]
+    '[clojure.tools.deps.extensions.git]
+    '[clojure.tools.deps.util.maven :as maven])
 
   (binding [*print-namespace-maps* false]
     (run! prn
@@ -219,6 +224,6 @@
 
   (binding [*print-namespace-maps* false]
     (run! prn
-      (find-all-versions 'org.clojure/tools.deps.alpha nil {:mvn/repos maven/standard-repos})))
+      (find-all-versions 'io.github.clojure/tools.build nil {:mvn/repos maven/standard-repos})))
 
   )

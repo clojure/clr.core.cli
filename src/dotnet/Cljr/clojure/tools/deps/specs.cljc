@@ -89,9 +89,8 @@
 (s/def ::aliases (s/map-of ::alias any?))
 (s/def ::deps-map (s/nilable (s/keys
                                :opt-un [::paths ::deps ::aliases]
-                               :opt [:mvn/repos :mvn/local-repo
-                                     :tools/usage :deps/prep-lib])))
-
+                               :opt [:mvn/repos :mvn/local-repo :tools/usage :deps/prep-lib])))
+							   
 ;; lib map
 ;;   a map of lib to resolved coordinate (a coord with a ::path) and dependent info
 (s/def ::dependents (s/coll-of ::lib))
@@ -140,7 +139,7 @@
                        (sort-by #(- (count (:in %))))
                        (sort-by #(- (count (:path %)))))
             {:keys [path pred val reason via in]} (first problems)]
-        (str "Found: " (pr-str val) ", expected: " (if reason reason (s/abbrev pred)))))))
+        (str "Found: " (pr-str val) ", expected: " (if reason reason (s/abbrev pred)) ", in: " (pr-str in))))))
 
 ;; API
 

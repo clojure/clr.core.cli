@@ -10,7 +10,7 @@
   clojure.tools.deps.extensions.deps
   (:require
     #?(:clj [clojure.java.io :as jio] :cljr [clojure.clr.io :as cio])
-    [clojure.tools.deps :as deps]
+    [clojure.tools.deps.edn :as depsedn]
     [clojure.tools.deps.extensions :as ext]
     [clojure.tools.deps.util.dir :as dir]
     [clojure.tools.deps.util.io :as io]
@@ -28,8 +28,8 @@
     (session/retrieve
       {:deps :map :file (.getAbsolutePath f)} ;; session key
       #(if (.exists f)
-         (deps/merge-edns [(deps/root-deps) (deps/slurp-deps f)])
-         (deps/root-deps)))))
+         (depsedn/merge-edns [(depsedn/root-deps) (depsedn/read-deps f)])
+         (depsedn/root-deps)))))
 
 :cljr
 ;; We can use "deps.edn" as the key in the session map -- we just need a consistent key.
@@ -42,21 +42,21 @@
       {:deps :map :file (.FullName f2)} ;; session key
       #(cond 
          (.Exists f1)
-         (deps/merge-edns [(deps/root-deps) (deps/slurp-deps f1)])
+         (depsedn/merge-edns [(depsedn/root-deps) (depsedn/read-deps f1)])
          (.Exists f2)
-         (deps/merge-edns [(deps/root-deps) (deps/slurp-deps f2)])
+         (depsedn/merge-edns [(depsedn/root-deps) (depsedn/read-deps f2)])
          :else
-         (deps/root-deps)))))
+         (depsedn/root-deps)))))
 )
 
 (defmethod ext/coord-deps :deps
   [_lib {:keys [deps/root] :as _coord} _mf config]
-  (dir/with-dir (#?(:clj jio/file :cljr cio/file-info) root)
+  (dir/with-dir (#?(:clj jio/file :cljr identity) root)
     (seq (:deps (deps-map config root)))))
 
 (defmethod ext/coord-paths :deps
   [_lib {:keys [deps/root] :as _coord} _mf config]
-  (dir/with-dir (#?(:clj jio/file :cljr cio/file-info) root)
+  (dir/with-dir (#?(:clj jio/file :cljr identity) root)
     (->> (:paths (deps-map config root))
       (map #(dir/canonicalize (#?(:clj jio/file :cljr identity) %)))
       (map #(do
@@ -87,11 +87,11 @@
 )
 
 (defmethod ext/coord-usage :deps [lib {:keys [deps/root] :as _coord} manifest-type config]
-  (dir/with-dir (#?(:clj jio/file :cljr cio/file-info) root)
+  (dir/with-dir (#?(:clj jio/file :cljr identity) root)
     (:tools/usage (deps-map config root))))
 
 (defmethod ext/prep-command :deps [lib {:keys [deps/root] :as _coord} manifest-type config]
-  (dir/with-dir (#?(:clj jio/file :cljr cio/file-info) root)
+  (dir/with-dir (#?(:clj jio/file :cljr identity) root)
     (let [external-deps (deps-map config root)]
       (when-let [prep-info (:deps/prep-lib external-deps)]
         (let [exec-args (-> external-deps :aliases (get (:alias prep-info)) :exec-args)]
