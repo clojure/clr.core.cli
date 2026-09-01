@@ -6,7 +6,7 @@ For ClojureCLR on .NET 6 and later.
 
 ## Releases
 
-The current release is 0.1.0-alpha8.
+The current release is 0.1.0-beta1.
 
 
 ## Installation
@@ -17,14 +17,14 @@ Prerequisite:  ClojureCLR must be installed as a tool.  See [Getting started (Cl
 To install as a global tool:
 
 ```
-dotnet tool install -g Clojure.Cljr --version 0.1.0-alpha8
+dotnet tool install -g Clojure.Cljr --version 0.1.0-beta1
 ```
 
 To install as a local tool:
 
 ```
 dotnet new tool-manifest # if you are setting up this repo
-dotnet tool install --local Clojure.Cljr --version 0.1.0-alpha8
+dotnet tool install --local Clojure.Cljr --version 0.1.0-beta1
 ```
 
 For other installation approaches, check out the [Clojure.Cljr Nuget page](https://www.nuget.org/packages/Clojure.Cljr/).
@@ -55,7 +55,7 @@ This reference uses `clj` for REPL examples and `clojure` for non-REPL examples.
 `cljr` does not have this distinction (for now).  There is just `cljr`.
 
 The status of the primary commands and the command line options is detailed below.  
-In general terms, tools and deps prep are not supported yet.  Anything related to Maven or JVM is not supported.
+In general terms, tools and are not supported yet.  Anything related to Maven or JVM is not supported.
 Most other things are ready for testing.
 
 
@@ -98,7 +98,7 @@ The status of the options:
 | -X:deps list          | Print deps list+licenses | Supported |
 | -X:deps tree          | Print deps tree | Supported |
 | -X:deps find-versions | Find available lib versions | Supported |
-| -X:deps prep          | Prepare all unprepped libs in deps | Not supported (yet) |
+| -X:deps prep          | Prepare all unprepped libs in deps | Supported |
 | -X:deps mvn-pom       | Generate pom.xml for deps.edn | Not supported |
 | -X:deps mvn-install   | Install maven jar to local repo | Not supported |
 
@@ -108,7 +108,7 @@ Most of the features of `deps.edn` files are supported.
 
 -- We support git lib and local directory dependencies only.  We do not support maven dependencie or local jars.  (Though we should have a discussion about the latter.)
 -- We are still thinking about how nuget might come into play.  It's complicated.
--- We do not yet have support for tool publishing and preparation steps.  See below.
+-- We do not yet have support for tool publishing steps.  See below.
 
 Generally, one puts a `deps.edn` file in the root directory of your code.  However, for projects that support multiple Clojure ports (JVM, CLR, Clojurescript), this will not always work.  
 For example, the JVM version may want to use Maven repos for dependencies, which the CLR version does not support.
@@ -145,7 +145,7 @@ cljr -X:test
 
 ## Things that need work
 
-This is an alpha release.  Have at it.
+This is an beta release.  Have at it.
 
 ### Tools and prepping
 We need some design thinking around tools and prepping.  Most of the library support on the JVM side are very specific to the JVM world:  Maven, jars, Java-ish things. 
