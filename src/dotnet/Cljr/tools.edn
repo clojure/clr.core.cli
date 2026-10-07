@@ -1,0 +1,6 @@
+;{:lib io.github.clojure/tools.tools
+; :coord {:git/tag "v0.3.8"
+;         :git/sha "fd43f6e927fe1b1635c063b3e18745bd46ecec33"}}
+
+{:lib io.github.clojure/tools.tools
+ :coord {:local/root "e:/work/clojure/tools.tools"}}

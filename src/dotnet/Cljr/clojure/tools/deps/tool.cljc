@@ -99,9 +99,27 @@
     (map #(subs % 0 (- (count %) 4)))
     sort))
 
+#?(   ;; different semantics on the .(D/d)elete method
+
+:clj 
 (defn remove-tool
   "Removes tool installation, if it exists. Returns true if it exists and was deleted."
   [tool]
   (let [f (tool-file tool)]
-    (when (#?(:clj .exists :cljr .Exists) f)
-      (#?(:clj .delete :cljf .Delete) f))))
+    (when (.exists f)
+      (.delete f))))
+	  
+:cljr
+
+(defn remove-tool
+  "Removes tool installation, if it exists. Returns true if it exists and was deleted."
+  [tool]
+  (let [f (tool-file tool)]
+    (when (.Exists f)
+	  (try 
+	   (.Delete f)
+	   true
+	   (catch Exception e 
+	      false)))))
+	  
+)
