@@ -21,6 +21,10 @@
         <PackageTags>Clojure;ClojureCLR</PackageTags>
     </PropertyGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="Cljr.Tests" />
+	</ItemGroup>
+	
     <ItemGroup>
         <None Remove="clojure\**" />
         <None Remove="example-deps.edn" />

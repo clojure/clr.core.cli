@@ -12,17 +12,17 @@ public enum EMode
 
 public class ParseItems
 {
-    readonly HashSet<string> Flags = new();
+    readonly HashSet<string> Flags = [];
     public string? Deps { get; set; } = null;
     public string? ForceClasspath { get; set; } = null;
     public int Threads { get; set; } = 0;
     public string? ToolName { get; set; } = null;
-    public List<string> JvmOpts { get; } = new();
-    public List<string> CommandArgs { get; set; } = new();
+    public List<string> JvmOpts { get; } = [];
+    public List<string> CommandArgs { get; set; } = [];
     public EMode Mode { get; set; } = EMode.Repl;
     public bool IsError { get; set; } = false;
     public string? ErrorMessage { get; set; } = null;
-    public Dictionary<EMode, string> CommandAliases { get; } = new();
+    public Dictionary<EMode, string> CommandAliases { get; } = [];
 
     public ParseItems SetError(string message)
     {

@@ -2,11 +2,11 @@
 
 public static class CommandLineParser
 {
-    static readonly List<string> DeprecatedPrefixes = new() { "-R", "-C", "-O" };
+    static readonly List<string> DeprecatedPrefixes = ["-R", "-C", "-O"];
     static bool StartsWithDeprecatedPrefix(string arg) => DeprecatedPrefixes.Any(p => arg.StartsWith(p));
     static string? NonBlank(string s) => string.IsNullOrEmpty(s) ? null : s;
     static string ExtractAlias(string s) => s[2..];
-    static List<string> GetArgs(int i, string[] args) => args.Skip(i).ToList();
+    static List<string> GetArgs(int i, string[] args) => [.. args.Skip(i)];
 
     public static ParseItems Parse(string[] args)
     {
