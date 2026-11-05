@@ -72,7 +72,7 @@ internal class InstalledClojureMainLocatorImpl : IInstalledClojureMainLocator
             {
                 return new InstalledClojureMainData
                 {
-                    Exception = new FileNotFoundException($"The Clojure.Main executable was not found at the expected location: {clojureMainPath}. Ensure that ClojureCLR is installed and that {Resolver.ClojureMainFilename} is in your PATH.")
+                    Exception = new FileNotFoundException($"The Clojure.Main executable was not found at the expected location: {clojureMainPath}.\nEnsure that ClojureCLR is installed and that {Resolver.ClojureMainFilename} is in your PATH.\nInstall via 'dotnet tool install -g clojure.main'.")
                 };
             }
 
@@ -87,7 +87,7 @@ internal class InstalledClojureMainLocatorImpl : IInstalledClojureMainLocator
         {
             return new InstalledClojureMainData
             {
-                Exception = new Exception($"Failed to start {Resolver.ClojureMainFilename}. Ensure that ClojureCLR is installed and that {Resolver.ClojureMainFilename} is in your PATH.", ex)
+                Exception = new Exception($"Failed to start {Resolver.ClojureMainFilename}.\nEnsure that ClojureCLR is installed and that {Resolver.ClojureMainFilename} is in your PATH.\nInstall via 'dotnet tool install -g clojure.main'.", ex)
             };
         }
 

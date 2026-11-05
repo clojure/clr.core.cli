@@ -139,21 +139,6 @@ internal static class Processor
 
         // & $JavaCmd - XX:-OmitStackTraceInFastThrow @JavaOpts @JvmCacheOpts @JvmOpts -Dclojure.basis=$BasisFile -classpath $CP clojure.main @MainCacheOpts @ClojureArgs
 
-        //using Process process = new();
-        //process.StartInfo.UseShellExecute = false;
-        //process.StartInfo.FileName = "powershell.exe";
-        //process.StartInfo.CreateNoWindow = false;   // TODO: When done debugging, set to true
-        //process.StartInfo.WorkingDirectory = Environment.CurrentDirectory;
-        //var env = process.StartInfo.EnvironmentVariables;
-        //env["CLOJURE_LOAD_PATH"] = classpath;  // TODO -- what is this?
-        //env["clojure.basis"] = basisFile;   // will this do -Dclojure.basis=$BasisFile  ?
-        //var argList = process.StartInfo.ArgumentList;
-        //argList.Add(Path.Join(installDir, Path.Join("tools", "run-clojure-main.ps1")));
-        //argList.Add("-e");
-        //argList.Add("\'(println 12)(load \\\"hello\\\")(println (hello/run))\'");
-        //process.Start();
-        //process.WaitForExit();
-
         Util.Print("Starting main");
 
         try

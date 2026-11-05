@@ -181,6 +181,17 @@ internal class EnvironmentManager
 
     public string GetVerboseMessage()
     {
+        string clojureMainPath = "";
+
+        try
+        {
+            clojureMainPath = Path.Join(DefaultClojureMainPath.Value, $"{Resolver.ClojureMainFilename}.dll");
+        }
+        catch (Exception ex)
+        {
+            clojureMainPath = $"Error finding Clojure.Main: {ex.Message}";
+        }
+
         return $"""
            version      = {Platform.Version}
            install_dir  = {InstallDir}
@@ -188,6 +199,7 @@ internal class EnvironmentManager
            config_paths = {string.Join(' ', ConfigPaths)}
            cache_dir    = {CacheDir}
            cp_file      = {CpFile}
+           clojure_main = {clojureMainPath}
            """;
     }
 
