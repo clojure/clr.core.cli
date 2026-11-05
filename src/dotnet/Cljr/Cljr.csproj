@@ -28,14 +28,10 @@
     <ItemGroup>
         <None Remove="clojure\**" />
         <None Remove="example-deps.edn" />
-        <None Remove="tools\**" />
     </ItemGroup>
 
     <ItemGroup>
         <Content Include="clojure\**">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="tools\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <Content Include="example-deps.edn">
@@ -45,6 +41,12 @@
 
     <ItemGroup>
       <None Update="tools.edn">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="tools\run-clojure-main.ps1">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="tools\run-clojure-main.sh">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>

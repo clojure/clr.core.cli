@@ -33,10 +33,26 @@ internal class EnvironmentManager
     public string BasisFile { get; private set; } = string.Empty;
     public string ManifestFile { get; private set; } = string.Empty;
 
+    public Lazy<string> DefaultClojureMainPath { get; }
+
     public EnvironmentManager(ParseItems cliArgs)
     {
         CliArgs = cliArgs;
         ParseAndConfigureEnvironment(cliArgs);
+
+        DefaultClojureMainPath = new Lazy<string>(InitializeDefaultClojureMainPath);
+    }
+
+    private string InitializeDefaultClojureMainPath()
+    {
+        var resolver = new Resolver();
+        var envVarLocn = Environment.GetEnvironmentVariable(Resolver.CljrClojureMainDllEnvVar);
+        var installedClojureMainLocator = new InstalledClojureMainLocatorImpl();
+
+        return resolver.FindDefaultClojureMainDll(
+            envVarLocn,
+            Path.Join(ConfigDir, Resolver.ClojureMainDLLCacheFilename),
+            installedClojureMainLocator);
     }
 
     public void ParseAndConfigureEnvironment(ParseItems cliArgs)
@@ -45,7 +61,7 @@ internal class EnvironmentManager
 
         // Determine user config directory; if it does not exist, create it
 
-        ConfigDir = EnvironmentManager.ComputeConfigDir();
+        ConfigDir = ComputeConfigDir();
 
         if (!Directory.Exists(ConfigDir))
             Directory.CreateDirectory(ConfigDir);
