@@ -13,6 +13,8 @@ internal class Resolver
     public static readonly string ClojureMainDLLCacheFilename = ".cljr-clojure-main";
     public static readonly string ClojureMainDLLCachePath = Path.Join(ClojureMainDLLCacheDirectory, ClojureMainDLLCacheFilename);
 
+    public static string MakeCachePath(string cacheDirectory) => Path.Join(cacheDirectory, ClojureMainDLLCacheFilename);
+
     // The name of the CLojure.Main executable, without extension.  (We'll need it with both .dll and .exe.)
     // Case-sensiitive.
     public static readonly string ClojureMainFilename = "Clojure.Main";
@@ -63,7 +65,7 @@ internal class Resolver
             throw installedClojureMainData.Exception;
         }
 
-        CacheDefaultClojureMainLocation(ClojureMainDLLCachePath, installedClojureMainData);
+        CacheDefaultClojureMainLocation(MakeCachePath(cacheDirectory), installedClojureMainData);
 
         return installedClojureMainData.ClojureMainDirectory;
     }

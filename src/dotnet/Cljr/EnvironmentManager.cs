@@ -51,7 +51,7 @@ internal class EnvironmentManager
 
         return resolver.FindDefaultClojureMainDll(
             envVarLocn,
-            Path.Join(ConfigDir, Resolver.ClojureMainDLLCacheFilename),
+            ConfigDir,
             installedClojureMainLocator);
     }
 

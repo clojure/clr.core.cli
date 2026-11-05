@@ -47,17 +47,14 @@ internal static class Processor
             {
                 var toolsArgs = mgr.ComputeToolsArgs();
 
-                var platformDependentToolArgs = Platform.IsWindows
-                    ? // incredible hack to get around dealing with what the powershell parser does to args with a : in them
-                      toolsArgs.Select(arg => $"\"{arg}\"")
-                    : toolsArgs;
 
                 using var process = CreateClojureProcess(
                     mgr.InstallDir,
+                    mgr.DefaultClojureMainPath.Value,
                     args:
                     [
                         "-m", "clojure.tools.deps.script.make-classpath2",
-                "--install-dir", mgr.InstallDir.Replace(@"\", @"\\"),
+                "--install-dir", mgr.InstallDir,
                 "--config-user", mgr.ConfigUser,
                 "--config-project", mgr.ConfigProject,
                 "--basis-file", mgr.BasisFile,
@@ -65,7 +62,7 @@ internal static class Processor
                 "--jvm-file", mgr.JvmFile,
                 "--main-file", mgr.MainFile,
                 "--manifest-file", mgr.ManifestFile,
-                ..platformDependentToolArgs
+                ..toolsArgs
                     ],
                     env: new()
                     {
@@ -99,26 +96,33 @@ internal static class Processor
 
         Util.Print("Starting exec/tool");
 
-        using var process = CreateClojureProcess(
-            mgr.InstallDir,
-            args:
-            [
-                "-m", "clojure.run.exec",
-                ..mgr.CliArgs.CommandArgs,
-            ],
-            env: new()
-            {
-                ["CLOJURE_LOAD_PATH"] =
-                    $"{mgr.GetClasspath()}{Path.PathSeparator}{mgr.InstallDir}", // TODO -- what is this? need to get the equivalent of exec.jar on the load path
-                ["clojure.basis"] = mgr.BasisFile,
-                ["clojure.cli.install_dir"] = mgr.InstallDir,
-            }
-        );
+        try
+        {
+            using var process = CreateClojureProcess(
+                mgr.InstallDir,
+                mgr.DefaultClojureMainPath.Value,
+                args:
+                [
+                    "-m", "clojure.run.exec",
+                    ..mgr.CliArgs.CommandArgs,
+                ],
+                env: new()
+                {
+                    ["CLOJURE_LOAD_PATH"] =
+                        $"{mgr.GetClasspath()}{Path.PathSeparator}{mgr.InstallDir}", // TODO -- what is this? need to get the equivalent of exec.jar on the load path
+                    ["clojure.basis"] = mgr.BasisFile,
+                    ["clojure.cli.install_dir"] = mgr.InstallDir,
+                });
 
-        process.Start();
-        process.WaitForExit();
+            process.Start();
+            process.WaitForExit();
 
-        return new ProcessResult { ExitCode = process.ExitCode };
+            return new ProcessResult { ExitCode = process.ExitCode };
+        }
+        catch (Exception ex)
+        {
+            return new ProcessResult { ExitCode = 1, Exception = ex };
+        }
     }
 
 
@@ -152,65 +156,57 @@ internal static class Processor
 
         Util.Print("Starting main");
 
-        using var process = CreateClojureProcess(
-            mgr.InstallDir,
-            args:
-            [
-                ..mainCacheOpts.Select(arg => arg.Replace(@"""", @"\""")),
-                ..mgr.CliArgs.CommandArgs,
-            ],
-            env: new()
-            {
-                ["CLOJURE_LOAD_PATH"] = mgr.GetClasspath(), // TODO -- what is this?
-                ["clojure.basis"] = mgr.BasisFile, // will this do -Dclojure.basis=$BasisFile  ?
-            }
-        );
+        try
+        {
+            using var process = CreateClojureProcess(
+                mgr.InstallDir,
+                mgr.DefaultClojureMainPath.Value,
+                args:
+                [
+                    ..mainCacheOpts,
+                    ..mgr.CliArgs.CommandArgs,
+                ],
+                env: new()
+                {
+                    ["CLOJURE_LOAD_PATH"] = mgr.GetClasspath(), // TODO -- what is this?
+                    ["clojure.basis"] = mgr.BasisFile, // will this do -Dclojure.basis=$BasisFile  ?
+                });
 
-        process.StartInfo.WorkingDirectory = Environment.CurrentDirectory;
-        process.Start();
-        process.WaitForExit();
-        return new ProcessResult { ExitCode = process.ExitCode };
+            process.StartInfo.WorkingDirectory = Environment.CurrentDirectory;
+
+            process.Start();
+            process.WaitForExit();
+            return new ProcessResult { ExitCode = process.ExitCode };
+        }
+        catch (Exception ex)
+        {
+            return new ProcessResult { ExitCode = 1, Exception = ex };
+        }
     }
 
-    static Process CreateClojureProcess(string installDir, string[] args, Dictionary<string, string> env)
+    static Process CreateClojureProcess(string installDir, string clojurMainDir, string[] args, Dictionary<string, string> env)
     {
         Process process = new()
         {
             StartInfo =
-        {
-            UseShellExecute = false,
-            CreateNoWindow = false,
-            FileName = Platform.IsWindows ? "powershell.exe" : "bash",
-        }
+            {
+                UseShellExecute = false,
+                CreateNoWindow = false,
+                FileName = "dotnet"
+            }
         };
 
         foreach (var (key, value) in env)
             process.StartInfo.EnvironmentVariables[key] = value;
 
-        List<string> prependArgs = [];
 
-        if (Platform.IsWindows)
-            prependArgs.AddRange([
-                "-NoProfile",
-            "-ExecutionPolicy", "ByPass",
-            "-File", Path.Join(installDir, "tools", "run-clojure-main.ps1")
-            ]);
-        else
-            prependArgs.Add(Path.Join(installDir, "tools", "run-clojure-main.sh"));
+        process.StartInfo.ArgumentList.Add("exec");
+        process.StartInfo.ArgumentList.Add(Path.Join(clojurMainDir, $"{Resolver.ClojureMainFilename}.dll"));
 
-        if (Platform.IsWindows)
-        {
-            foreach (var arg in prependArgs.Concat(args))
-                process.StartInfo.ArgumentList.Add(arg.Contains(' ') ? $"\"{arg}\"" : arg);
-        }
-        else
-        {
-            foreach (var arg in prependArgs.Concat(args))
-                process.StartInfo.ArgumentList.Add(arg);
-        }
+        foreach (var arg in args)
+            process.StartInfo.ArgumentList.Add(arg);
 
         return process;
-
     }
 
 }
