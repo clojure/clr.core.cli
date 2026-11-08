@@ -2,7 +2,7 @@
   "profiles": {
     "Cljr": {
       "commandName": "Project",
-      "commandLineArgs": "-Ttools list ",
+      "commandLineArgs": " -Ttools list",
       "workingDirectory": "E:\\work\\clojure\\clr.tools.namespace"
     }
   }

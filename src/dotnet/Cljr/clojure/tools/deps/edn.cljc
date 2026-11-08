@@ -142,6 +142,9 @@
 
 ;;;; Read deps with validation and canonicalization
 
+#?(
+:clj
+
 (defn read-deps
   "Corece f to a file with jio/file, then read, validate, and canonicalize
   the deps.edn. This is the primary entry point for reading.
@@ -149,10 +152,29 @@
 
   Opts: none for now"
   [f & {:as opts}]
-  (let [file (#?(:clj jio/file :cljr cio/file-info) f)
-        opts (assoc opts :path (#?(:clj .getPath :cljr .FullName) file))]
-    (when (#?(:clj .exists :cljr .Exists) file)
-      (-> file #?(:clj jio/reader :cljr cio/text-reader)(read-edn opts) (validate opts) (canonicalize opts)))))
+  (let [file (jio/file f)
+        opts (assoc opts :path (.getPath file))]
+    (when (.exists file)
+      (-> file jio/reader (read-edn opts) (validate opts) (canonicalize opts)))))
+
+:cljr 
+	  
+(defn read-deps
+  "Corece f to a file with jio/file, then read, validate, and canonicalize
+  the deps.edn. This is the primary entry point for reading.
+  Use read-edn, validate, or canonicalize for individual steps.
+
+  Opts: none for now"
+  [f & {:as opts}]
+  (let [file (cio/file-info f)
+        opts (assoc opts :path (.FullName file))]
+	(when (System.IO.Directory/Exists (.FullName file))
+	   (throw (io-err "Error reading deps.edn, path is a directory (%s)" opts)))
+    (when (.Exists file)
+      (-> file cio/text-reader(read-edn opts) (validate opts) (canonicalize opts)))))
+	  
+)
+
 
 ;;;; Dep chain lookups
 
@@ -193,7 +215,7 @@
      :aliases 
 	 {
        :deps {:replace-paths []
-              :replace-deps {io.github.clojure/clr.tools.deps.cli {:git/tag "v0.31.160" :git/sha "b064b2c"}}
+              :replace-deps {io.github.clojure/clr.tools.deps.cli {:git/tag "v0.31.161" :git/sha "7cd64a3"}}
               :ns-default clojure.tools.deps.cli.api
               :ns-aliases {help clojure.tools.deps.cli.help}}
         :test {:extra-paths ["test"]}
@@ -238,8 +260,6 @@
 (defn get-env-var [^String env-var]
   ( #?(:clj System/getenv 
        :cljr Environment/GetEnvironmentVariable)  env-var))
-#?(
-:clj
 
 (defn user-config-dir
   "Use the same logic as clj to calculate the location of the user config dir.
@@ -252,26 +272,6 @@
     (cond config-env config-env
           xdg-env (str xdg-env directory-separator "clojure")
          :else (str home directory-separator ".clojure"))))
-    
-:cljr
-
-(defn user-config-dir
-  "Use the same logic as clj to calculate the location of the user config dir.
-  Note that it's possible no dir may exist at this location.
-  Return path as string."
-  (^String [] 
-    (user-config-dir "deps-clr.edn"))
-  (^String [filename]
-    (let [config-env (get-env-var "CLJ_CONFIG")
-          xdg-env (get-env-var "XDG_CONFIG_HOME")
-          home (get-user-home)]
-    (cond config-env config-env
-          xdg-env (str xdg-env directory-separator "clojure")
-         :else (str home directory-separator ".clojure")))))
-
-)
-
-
 
 (defn user-deps-path
   "Use the same logic as clj to calculate the location of the user deps.edn.
@@ -279,6 +279,18 @@
   Returns path as string."
   []
   (str (user-config-dir) directory-separator "deps.edn"))
+  
+#?(
+:cljr
+
+(defn user-deps-clr-path
+  "Use the same logic as clj to calculate the location of the user deps-clr.edn.
+  Note that it's possible no file may exist at this location.
+  Returns path as string."
+  []
+  (str (user-config-dir) directory-separator "deps-clr.edn"))
+  
+)
 
 #?(
 
@@ -296,7 +308,7 @@
   "Calculate the user deps.edn per user-deps-path, read and
   return the deps.edn data"
   []
-  (or (-> (user-deps-path) dir/canonicalize read-deps)
+  (or (-> (user-deps-clr-path) dir/canonicalize read-deps)
       (-> (user-deps-path) dir/canonicalize read-deps)))
 
 )
@@ -321,6 +333,19 @@
   project-deps-path."
   ^String []
   (str (project-dir) directory-separator "deps.edn"))
+  
+#?(
+:cljr
+(defn project-deps-clr-path
+  "Calculate the project deps-clr.edn location. This
+  is the deps-clr.edn in the current directory, as defined by
+  clojure.tools.deps.util.dir/*the-dir* - use with-dir
+  to push a new local directory context around a call to
+  project-deps-clr-path."
+  ^String []
+  (str (project-dir) directory-separator "deps-clr.edn"))
+  
+ )
 
 #?(
 
@@ -342,7 +367,7 @@
   You may use clojure.tools.deps.util.dir/with-dir to read from a custom project
   dir, either absolute or relative to the current dir context."
   []
-  (or (-> (project-deps-path) dir/canonicalize read-deps)
+  (or (-> (project-deps-clr-path) dir/canonicalize read-deps)
       (-> (project-deps-path) dir/canonicalize read-deps)))
 )
 

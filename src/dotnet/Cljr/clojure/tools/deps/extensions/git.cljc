@@ -11,6 +11,7 @@
   (:require
     #?(:clj [clojure.java.io :as jio] :cljr [clojure.clr.io :as cio])
     [clojure.tools.deps.extensions :as ext]
+	[clojure.tools.deps.util.dir :as dir]
     [clojure.tools.gitlibs :as gitlibs]))
 
 (def ^:private git-services
@@ -97,6 +98,7 @@
   (let [[_lib {:git/keys [url sha]}] (to-canonical lib coord config)]
     {:git/url url, :git/sha sha}))
 
+
 (defmethod ext/manifest-type :git
   [lib coord config]
   (let [[lib {:git/keys [url sha] :deps/keys [manifest root]}] (to-canonical lib coord config)]
@@ -109,10 +111,7 @@
                                    (if (.isAbsolute root-file) ;; should be only after coordinate resolution
                                      (.getCanonicalPath root-file)
                                      (.getCanonicalPath (jio/file sha-dir root-file))))
-							:cljr (let [root-file (cio/file-info root)]
-							        ;; there is no notion of absolute vs nonabsolute for FileInfo.
-									;; how do we make sure the sha-dir is in there?
-									(.FullName root-file)))
+							:cljr (dir/resolve-against sha-dir root))
                          sha-dir)]
           (if manifest
             {:deps/manifest manifest, :deps/root root-dir}

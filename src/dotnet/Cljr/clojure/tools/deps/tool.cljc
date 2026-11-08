@@ -28,7 +28,7 @@
 :cljr
 (defn- tool-dir 
   ^DirectoryInfo []
-  (cio/dir-info (.Parent (cio/dir-info (depsedn/user-deps-path))) "tools"))
+  (cio/dir-info (depsedn/user-config-dir) "tools"))
 )
 
 #?(
@@ -88,16 +88,33 @@
       (ext/coord-usage lib (merge coord manifest-type) (:deps/manifest manifest-type) config))
     (throw (ex-info (str "Unknown tool: " tool) {:tool tool}))))
 
+#?(
+:clj
+
 (defn list-tools
   "Return seq of available tool names"
   []
-  (->> (#?(:clj .listFiles :cljr .GetFiles) (tool-dir))
-    #?(:clj (filter #(.isFile ^File %)))
-    #?(:clj (map #(.getName ^File %))
-	   :cljr (map #(.Name ^FileInfo %)))
+  (->> (.listFiles (tool-dir))
+    (filter #(.isFile ^File %))
+    (map #(.getName ^File %))
     (filter #(str/ends-with? % ".edn"))
     (map #(subs % 0 (- (count %) 4)))
     sort))
+
+:cljr
+
+(defn list-tools
+  "Return seq of available tool names"
+  []
+  (let [td (tool-dir)]
+    (if (.Exists td)
+      (->> (.GetFiles td)
+        (map #(.Name ^FileInfo %))
+        (filter #(str/ends-with? % ".edn"))
+        (map #(subs % 0 (- (count %) 4)))
+        sort)
+      ())))                                 ;; to match :clj returning () on non-existent directory
+)
 
 #?(   ;; different semantics on the .(D/d)elete method
 

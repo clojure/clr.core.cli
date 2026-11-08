@@ -17,7 +17,7 @@
     #?(:clj [clojure.tools.deps.util.maven :as maven])
     [clojure.tools.deps.util.session :as session])
   (:import
-    #?(:clj [java.io File IOException] :cljr [System.IO FileInfo DirectoryInfo])
+    #?(:clj [java.io File IOException] :cljr [System.IO File FileInfo DirectoryInfo])
     #?(:clj [java.net URL])
     #?(:clj [java.util.jar JarFile JarEntry])
     ;; maven-builder-support
@@ -46,9 +46,13 @@
 (defn- ensure-directory
   ^DirectoryInfo [lib root]
   (let [d (cio/dir-info root)]
-    (if (.Exists d)
-      d
-      (throw (ex-info (format "Local lib %s not found: %s" lib root) {:lib lib :root root})))))	  
+    (cond 
+	(.Exists d) 
+	d
+	(File/Exists root)
+	(throw(ex-info (format "Local root %s must be a directory" root) {:lib lib :root root}))
+    :else
+    (throw (ex-info (format "Local lib %s not found: %s" lib root) {:lib lib :root root})))))	  
 )
 
 (defmethod ext/canonicalize :local
@@ -69,19 +73,13 @@
   nil)
 
 
-#?(:cljr
-(defn normal? [^System.IO.FileSystemInfo fsi]
-  (pos? (enum-and (.Attributes fsi)
-                  (enum-or System.IO.FileAttributes/Normal System.IO.FileAttributes/Archive))))
-)
-
 (defmethod ext/manifest-type :local
   [lib {:keys [local/root deps/manifest] :as _coord} _config]
   (cond
     manifest {:deps/manifest manifest :deps/root root}
-    #?(:clj (.isFile (ensure-file lib root))
-       :cljr (normal? (ensure-directory lib root))) {:deps/manifest :jar, :deps/root root}
-    :else (ext/detect-manifest root)))
+    #?@(:clj [(.isFile (ensure-file lib root)) {:deps/manifest :jar, :deps/root root}])
+    :else (do #?(:cljr (ensure-directory lib root))
+	          (ext/detect-manifest root))))
 
 (defmethod ext/coord-summary :local [lib {:keys [local/root]}]
   (str lib " " root))

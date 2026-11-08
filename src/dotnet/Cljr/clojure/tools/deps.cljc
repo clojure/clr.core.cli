@@ -25,7 +25,7 @@
   (:import
     [clojure.lang PersistentQueue]
     #?(:clj [java.io File]
-	   :cljr [System.IO  Path FileInfo DirectoryInfo])
+	   :cljr [System.IO  Path File Directory FileInfo DirectoryInfo])
     #?(:clj [java.lang ProcessBuilder ProcessBuilder$Redirect] )   ;;; :cljr [System.Diagnostics ProcessStartInfo Process]  -- defer until after we load the dll, if required.
     #?(:clj [java.util List] 
 	   :cljr [System.Collections ArrayList])
@@ -548,12 +548,27 @@
   (let [aliases' (assoc aliases :paths paths :extra-paths extra-paths)]
     (into [] (comp (mapcat #(chase-key aliases' %)) (remove nil?)) [:extra-paths :paths])))
 
+#?(
+:clj
+
 (defn- validate-paths
   [paths]
   (doto paths
     (->> (map first)
-      (run! #(when (not (dir/sub-path? (#?(:clj jio/file :cljr cio/file-info) %)))
+      (run! #(when (not (dir/sub-path? (jio/file %)))
                (io/printerrln "WARNING: Use of :paths external to the project has been deprecated, please remove:" %))))))
+
+:cljr
+			   
+(defn- validate-paths
+  [paths]
+  (doto paths
+    (->> (map first)
+      (run! #(when (not (dir/sub-path? %))
+               (io/printerrln "WARNING: Use of :paths external to the project has been deprecated, please remove:" %))))))
+
+)			   
+			   
 
 (defn- tree-paths
   "Given a lib map, return a vector of all vector paths to included libs in the tree.
@@ -733,6 +748,15 @@
 
 (declare create-basis)
 
+;; DM: added
+
+(defn- root+ensure-exists? [root ensure]
+  ;; ensure must be non-nil
+  (let [path #?(:clj (jio/file root ensure) :cljr (Path/Combine root ensure))]
+    #?(:clj (.exists path)
+       :cljr (or (Directory/Exists path) (File/Exists path)))))
+
+
 (defn prep-libs!
   "Takes a lib map and looks for unprepped libs, optionally prepping them.
 
@@ -751,8 +775,7 @@
         (reduce-kv
          (fn [ret lib {:deps/keys [root manifest] :as coord}]
            (if-let [{f :fn, :keys [alias ensure exec-args]} (ext/prep-command lib coord manifest config)]
-             (let [ensure-dir (when ensure (#?(:clj jio/file :cljr cio/dir-info) root ensure))
-                   unprepped (and ensure (not (#?(:clj .exists :cljr .Exists) ^#?(:clj File  :cljr DirectoryInfo) ensure-dir)))]
+             (let [unprepped (and ensure (not (root+ensure-exists? root ensure)))]
                (when (#{:debug} log) (println lib "-" (if unprepped "unprepped" "prepped")))
                (if (or (= action :force) (and unprepped (= action :prep)))
                  (do
