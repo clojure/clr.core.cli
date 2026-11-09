@@ -437,6 +437,7 @@
    :default-deps merge
    :classpath-overrides merge
    :paths append-unique ;; FUTURE: remove
+   :clr/frameworks append-unique                    ;;; CLR-only, but doesn't hurt to have in JVM
    :replace-paths append-unique ;; formerly :paths
    :extra-paths append-unique
    :jvm-opts append

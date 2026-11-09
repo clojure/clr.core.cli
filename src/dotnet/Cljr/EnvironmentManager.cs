@@ -30,6 +30,7 @@ internal class EnvironmentManager
     public string CpFile { get; private set; } = string.Empty;
     public string JvmFile { get; private set; } = string.Empty;
     public string MainFile { get; private set; } = string.Empty;
+    public string FrameworksFile { get; private set; } = string.Empty;
     public string BasisFile { get; private set; } = string.Empty;
     public string ManifestFile { get; private set; } = string.Empty;
 
@@ -101,25 +102,19 @@ internal class EnvironmentManager
 
         ConfigPaths.Add(Path.Join(InstallDir, DefaultConfigFilename));
 
-        // I think in this case it does not matter whether we have deps.edn or deps-clr.edn.
-        // This is used only to determine wither the user config file is being used or not.
-        // Which actual project file is used is not really relevant.
         if (!cliArgs.HasFlag("repro"))
             ConfigPaths.Add(ConfigUser);
-
-        ConfigPaths.Add(DefaultConfigFilename);
-
-
-
 
         // Determine the user cache directory
         var userCacheDir = Environment.GetEnvironmentVariable(CljCacheEnvVar) ?? Path.Join(ConfigDir, ".cpcache");
 
-
         // Determine whether to use user or project cache
+
         var depFile = depsFiles.FirstOrDefault(File.Exists);
         CacheDir = depFile is not null ? ".cpcache" : userCacheDir;
         ConfigProject = depFile ?? DefaultConfigFilename;
+
+        ConfigPaths.Add(ConfigProject);
 
         // Construct location of cached classpath file
         const string cacheVersion = "CLR4";
@@ -140,6 +135,7 @@ internal class EnvironmentManager
         MainFile = Path.Join(CacheDir, $"{cacheKeyHash}.main");
         BasisFile = Path.Join(CacheDir, $"{cacheKeyHash}.basis");
         ManifestFile = Path.Join(CacheDir, $"{cacheKeyHash}.manifest");
+        FrameworksFile = Path.Join(CacheDir, $"{cacheKeyHash}.frameworks");
 
         // Compute if classpath is stale.
 

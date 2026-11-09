@@ -62,6 +62,7 @@ internal static class Processor
                 "--jvm-file", mgr.JvmFile,
                 "--main-file", mgr.MainFile,
                 "--manifest-file", mgr.ManifestFile,
+                "--frameworks-file", mgr.FrameworksFile,
                 ..toolsArgs
                     ],
                     env: new()

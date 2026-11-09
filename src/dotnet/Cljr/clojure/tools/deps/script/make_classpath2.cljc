@@ -41,6 +41,7 @@
    [nil "--cp-file PATH" "Classpatch cache file to write"]
    [nil "--jvm-file PATH" "JVM options file"]
    [nil "--main-file PATH" "Main options file"]
+   #?(:cljr [nil "--frameworks-file PATH" ".NET frameworks file"])
    [nil "--manifest-file PATH" "Manifest list file"]
    [nil "--basis-file PATH" "Basis file"]
    [nil "--skip-cp" "Skip writing .cp files"]
@@ -139,7 +140,7 @@
 
 (defn run
   "Run make-classpath script. See -main for details."
-  [{:keys [cp-file jvm-file main-file basis-file manifest-file skip-cp tool-mode tool-name tool-aliases trace tree] :as opts}]
+  [{:keys [cp-file jvm-file main-file frameworks-file basis-file manifest-file skip-cp tool-mode tool-name tool-aliases trace tree] :as opts}]
   #_(when-let [user-agent (some-> "clojure/install/useragent.txt" jio/resource slurp)]   ;;; CLR: Maven specific -- ignore
     (System/setProperty "aether.connector.userAgent" user-agent))  
   (let [opts' (cond-> opts
@@ -147,7 +148,8 @@
                 (assoc :tool-data (when tool-name (resolve-tool-args tool-name))))
         {:keys [basis manifests], trace-log :trace} (run-core opts')
         {:keys [argmap libs classpath-roots]} basis
-        {:keys [jvm-opts main-opts]} argmap]
+        {:keys [jvm-opts main-opts]} argmap
+        #?@(:cljr [{:clr/keys [frameworks]} argmap])]
     (when trace
       (spit "trace.edn" 
             (binding [*print-namespace-maps* false] (with-out-str (pprint/pprint trace-log)))
@@ -159,6 +161,7 @@
     (io/write-file basis-file (binding [*print-namespace-maps* false] (pr-str basis)))
     (write-lines (seq jvm-opts) jvm-file)
     (write-lines (seq main-opts) main-file)  ;; FUTURE: add check to only do this if main-aliases were passed
+    #?(:cljr (when frameworks-file (write-lines (seq frameworks) frameworks-file)))
     (write-lines manifests manifest-file)))
 
 (defn -main
@@ -173,6 +176,7 @@
     --cp-file=path - cp cache file to write
     --jvm-file=path - jvm opts file to write
     --main-file=path - main opts file to write
+    --frameworks-file=path - .NET frameworks (CLR only)
     --manifest-file=path - manifest list file to write
     --basis-file=path - basis file to write
     -Mmain-aliases - concatenated main-opt alias names
