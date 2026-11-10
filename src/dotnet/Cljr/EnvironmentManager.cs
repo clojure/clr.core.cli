@@ -31,6 +31,8 @@ internal class EnvironmentManager
     public string JvmFile { get; private set; } = string.Empty;
     public string MainFile { get; private set; } = string.Empty;
     public string FrameworksFile { get; private set; } = string.Empty;
+    public string RuntimeConfigFile { get; private set; } = string.Empty;
+    public string RuntimeConfigSourceFile { get; private set; } = string.Empty;
     public string BasisFile { get; private set; } = string.Empty;
     public string ManifestFile { get; private set; } = string.Empty;
 
@@ -136,6 +138,8 @@ internal class EnvironmentManager
         BasisFile = Path.Join(CacheDir, $"{cacheKeyHash}.basis");
         ManifestFile = Path.Join(CacheDir, $"{cacheKeyHash}.manifest");
         FrameworksFile = Path.Join(CacheDir, $"{cacheKeyHash}.frameworks");
+        RuntimeConfigFile = Path.Join(CacheDir, $"{cacheKeyHash}.runtimeconfig.json");
+        RuntimeConfigSourceFile = Path.Join(CacheDir, $"{cacheKeyHash}.runtimeconfig.source");
 
         // Compute if classpath is stale.
 
@@ -174,11 +178,54 @@ internal class EnvironmentManager
         return Path.Join(homeConfig, ".clojure");
     }
 
+    public string? GetRuntimeConfigPath()
+    {
+        return GetRuntimeConfigPath(FrameworksFile, RuntimeConfigFile, RuntimeConfigSourceFile, DefaultClojureMainPath.Value);
+    }
+
+    public static string? GetRuntimeConfigPath(string frameworksFile, string runtimeConfigFile, string runtimeConfigSourceFile, string clojureMainDirectory)
+    {
+        List<string> frameworks = File.Exists(frameworksFile)
+            ? [.. File.ReadAllLines(frameworksFile).Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => f.Trim())]
+            : [];
+
+        if (frameworks.Count == 0)
+        {
+            // No frameworks specified (no file, or file with no content), so we don't generate a runtimeconfig.json file.
+            return null;
+        }
+
+        string sourceConfigPath = Path.Combine(clojureMainDirectory, $"{Resolver.ClojureMainFilename}.runtimeconfig.json");
+        if (!File.Exists(sourceConfigPath))
+            throw new FileNotFoundException($"The runtimeconfig.json file was not found in the Clojure.Main.dll directory: {sourceConfigPath}");
+
+        string recordedSourcePath = File.Exists(runtimeConfigSourceFile) ? File.ReadAllText(runtimeConfigSourceFile).Trim() : string.Empty;
+
+        // Check for staleness.
+        // The three conditions for staleness are:
+        //   <hash>.frameworks (= FrameworksFile) is newer than <hash>.runtimeconfig.json (= RuntimeConfigFile)
+        //   runtimeconfig.json (= sourceConfigPath) is newer than <hash>.runtimeconfig.json (= RuntimeConfigFile)  (Clojure.Main was upgraded in place)
+        //   The recorded source path is different from the current sourceConfigPath  (e.g., the user switched CLJR_CLOJURE_MAIN_DLL environment variable to point to a different Clojure.Main.dll)
+
+        if (!IsNewerFile(frameworksFile, runtimeConfigFile) && !IsNewerFile(sourceConfigPath, runtimeConfigFile) && recordedSourcePath == sourceConfigPath)
+        {
+            // Not stale, so we don't need to regenerate the runtimeconfig.json file.
+            return runtimeConfigFile;
+        }
+
+        // the <hash>.runtimeconfig.json file is stale, so we need to regenerate it.
+
+        string newJson = RuntimeConfigGenerator.Generate(File.ReadAllText(sourceConfigPath), frameworks);
+
+        File.WriteAllText(runtimeConfigFile, newJson);
+        File.WriteAllText(runtimeConfigSourceFile, sourceConfigPath);
+
+        return runtimeConfigFile;
+    }
 
     public string GetVerboseMessage()
     {
-        string clojureMainPath = "";
-
+        string clojureMainPath;
         try
         {
             clojureMainPath = Path.Join(DefaultClojureMainPath.Value, $"{Resolver.ClojureMainFilename}.dll");

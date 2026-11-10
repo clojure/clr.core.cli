@@ -4,38 +4,6 @@ namespace Cljr.Tests;
 
 public class RuntimeConfigGeneratorTests
 {
-    // Helpers
-
-    static void ExtractNamesAndVersions(JsonNode node, out List<string> names, out List<string> versions)
-    {
-        var options = (node?["runtimeOptions"]) ?? throw new InvalidOperationException("Failed to parse runtimeconfig.json, missing runtimeOptions");
-        var frameworks = options["frameworks"] as JsonArray;
-        var frameworksArray = frameworks?.ToArray() ?? throw new InvalidOperationException("Failed to parse runtimeconfig.json, missing frameworks array");
-        names = frameworksArray.Select(fw => fw?["name"]?.GetValue<string>() ?? "unknown").ToList();
-        versions = frameworksArray.Select(fw => fw?["version"]?.GetValue<string>() ?? "unknown").ToList();
-    }
-
-    static string ExtractTfm(JsonNode node)
-    {
-        var options = (node?["runtimeOptions"]) ?? throw new InvalidOperationException("Failed to parse runtimeconfig.json, missing runtimeOptions");
-        return options["tfm"]?.GetValue<string>() ?? "unknown";
-    }
-
-    static Dictionary<string, string> ExtractConfigProperties(JsonNode node)
-    {
-        var options = (node?["runtimeOptions"]) ?? throw new InvalidOperationException("Failed to parse runtimeconfig.json, missing runtimeOptions");
-        var configProperties = options["configProperties"] as JsonObject;
-        return configProperties?.ToDictionary(kv => kv.Key, kv => kv.Value?.GetValue<object>().ToString() ?? "unknown") ?? throw new InvalidOperationException("Failed to parse runtimeconfig.json, missing configProperties");
-    }
-
-    static void AssertNoFrameworkElement(JsonNode node)
-    {
-        var options = (node?["runtimeOptions"]) ?? throw new InvalidOperationException("Failed to parse runtimeconfig.json, missing runtimeOptions");
-        Assert.Null(options["framework"]);
-    }
-
-    // Tests
-
     [Fact]
     public void TestGenerateWithFramework()
     {
@@ -68,15 +36,15 @@ public class RuntimeConfigGeneratorTests
         var result = RuntimeConfigGenerator.Generate(source, frameworksToAdd);
         var node = JsonNode.Parse(result) ?? throw new InvalidOperationException("Failed to parse runtimeconfig.json");
 
-        ExtractNamesAndVersions(node, out var frameworkNames, out var frameworkVersions);
-        string tfm = ExtractTfm(node);
-        var configProperties = ExtractConfigProperties(node);
+        RuntimeConfigHelpers.ExtractNamesAndVersions(node, out var frameworkNames, out var frameworkVersions);
+        string tfm = RuntimeConfigHelpers.ExtractTfm(node);
+        var configProperties = RuntimeConfigHelpers.ExtractConfigProperties(node);
 
         Assert.Equal(expectedNames, frameworkNames);
         Assert.All(frameworkVersions, v => Assert.Equal(sourceVersion, v));
         Assert.Equal(sourceTfm, tfm);
         Assert.Equal(sourceConfigProperties, configProperties);
-        AssertNoFrameworkElement(node);
+        RuntimeConfigHelpers.AssertNoFrameworkElement(node);
     }
 
     [Fact]
@@ -110,15 +78,15 @@ public class RuntimeConfigGeneratorTests
         var result = RuntimeConfigGenerator.Generate(source, frameworksToAdd);
         var node = JsonNode.Parse(result) ?? throw new InvalidOperationException("Failed to parse runtimeconfig.json");
 
-        ExtractNamesAndVersions(node, out var frameworkNames, out var frameworkVersions);
-        string tfm = ExtractTfm(node);
-        var configProperties = ExtractConfigProperties(node);
+        RuntimeConfigHelpers.ExtractNamesAndVersions(node, out var frameworkNames, out var frameworkVersions);
+        string tfm = RuntimeConfigHelpers.ExtractTfm(node);
+        var configProperties = RuntimeConfigHelpers.ExtractConfigProperties(node);
 
         Assert.Equal(expectedNames, frameworkNames);
         Assert.All(frameworkVersions, v => Assert.Equal(sourceVersion, v));
         Assert.Equal(sourceTfm, tfm);
         Assert.Equal(sourceConfigProperties, configProperties);
-        AssertNoFrameworkElement(node);
+        RuntimeConfigHelpers.AssertNoFrameworkElement(node);
     }
 
     [Fact]
@@ -144,11 +112,11 @@ public class RuntimeConfigGeneratorTests
 
         var result = RuntimeConfigGenerator.Generate(source, frameworksToAdd);
         var node = JsonNode.Parse(result) ?? throw new InvalidOperationException("Failed to parse runtimeconfig.json");
-        ExtractNamesAndVersions(node, out var frameworkNames, out var frameworkVersions);
+        RuntimeConfigHelpers.ExtractNamesAndVersions(node, out var frameworkNames, out var frameworkVersions);
 
         Assert.Equal(expectedNames, frameworkNames);
         Assert.Equal(expectedVersions, frameworkVersions);
-        AssertNoFrameworkElement(node);
+        RuntimeConfigHelpers.AssertNoFrameworkElement(node);
     }
 
     [Fact]
@@ -192,10 +160,10 @@ public class RuntimeConfigGeneratorTests
         var result = RuntimeConfigGenerator.Generate(source, frameworksToAdd);
         var node = JsonNode.Parse(result) ?? throw new InvalidOperationException("Failed to parse runtimeconfig.json");
 
-        ExtractNamesAndVersions(node, out var frameworkNames, out var _);
+        RuntimeConfigHelpers.ExtractNamesAndVersions(node, out var frameworkNames, out var _);
 
         Assert.Equal(expectedNames, frameworkNames);
-        AssertNoFrameworkElement(node);
+        RuntimeConfigHelpers.AssertNoFrameworkElement(node);
     }
 
     [Fact]
@@ -251,15 +219,15 @@ public class RuntimeConfigGeneratorTests
         var result = RuntimeConfigGenerator.Generate(source, frameworksToAdd);
         var node = JsonNode.Parse(result) ?? throw new InvalidOperationException("Failed to parse runtimeconfig.json");
 
-        ExtractNamesAndVersions(node, out var frameworkNames, out var frameworkVersions);
-        string tfm = ExtractTfm(node);
-        var configProperties = ExtractConfigProperties(node);
+        RuntimeConfigHelpers.ExtractNamesAndVersions(node, out var frameworkNames, out var frameworkVersions);
+        string tfm = RuntimeConfigHelpers.ExtractTfm(node);
+        var configProperties = RuntimeConfigHelpers.ExtractConfigProperties(node);
 
         Assert.Equal(expectedNames, frameworkNames);
         Assert.All(frameworkVersions, v => Assert.Equal(sourceVersion, v));
         Assert.Equal(sourceTfm, tfm);
         Assert.Equal(sourceConfigProperties, configProperties);
-        AssertNoFrameworkElement(node);
+        RuntimeConfigHelpers.AssertNoFrameworkElement(node);
     }
 
 }
