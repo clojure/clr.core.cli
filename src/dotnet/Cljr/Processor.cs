@@ -8,10 +8,7 @@ namespace Cljr;
 //   Main
 internal static class Processor
 {
-
-
     // Here's where I'd really like to have discriminated unions.
-
     public class ProcessResult
     {
         // An exception occurred while trying to run the process.  The exception is stored here.
@@ -95,10 +92,11 @@ internal static class Processor
     {
         // & $JavaCmd -XX:-OmitStackTraceInFastThrow @JavaOpts @JvmCacheOpts @JvmOpts "-Dclojure.basis=$BasisFile" -classpath "$CP;$InstallDir/exec.jar" clojure.main -m clojure.run.exec @ClojureArgs
 
-        Util.Print("Starting exec/tool");
+        //Util.Print("Starting exec/tool");
 
         try
         {
+            var runtimeConfigPath = mgr.GetRuntimeConfigPath();
             using var process = CreateClojureProcess(
                 mgr.InstallDir,
                 mgr.DefaultClojureMainPath.Value,
@@ -113,7 +111,8 @@ internal static class Processor
                         $"{mgr.GetClasspath()}{Path.PathSeparator}{mgr.InstallDir}", // TODO -- what is this? need to get the equivalent of exec.jar on the load path
                     ["clojure.basis"] = mgr.BasisFile,
                     ["clojure.cli.install_dir"] = mgr.InstallDir,
-                });
+                },
+                runtimeConfigPath);
 
             process.Start();
             process.WaitForExit();
@@ -125,7 +124,6 @@ internal static class Processor
             return new ProcessResult { ExitCode = 1, Exception = ex };
         }
     }
-
 
     public static ProcessResult RunMain(EnvironmentManager mgr)
     {
@@ -140,10 +138,12 @@ internal static class Processor
 
         // & $JavaCmd - XX:-OmitStackTraceInFastThrow @JavaOpts @JvmCacheOpts @JvmOpts -Dclojure.basis=$BasisFile -classpath $CP clojure.main @MainCacheOpts @ClojureArgs
 
-        Util.Print("Starting main");
+        //Util.Print("Starting main");
 
         try
         {
+            var runtimeConfigPath = mgr.GetRuntimeConfigPath();
+
             using var process = CreateClojureProcess(
                 mgr.InstallDir,
                 mgr.DefaultClojureMainPath.Value,
@@ -156,7 +156,8 @@ internal static class Processor
                 {
                     ["CLOJURE_LOAD_PATH"] = mgr.GetClasspath(), // TODO -- what is this?
                     ["clojure.basis"] = mgr.BasisFile, // will this do -Dclojure.basis=$BasisFile  ?
-                });
+                },
+                runtimeConfigPath);
 
             process.StartInfo.WorkingDirectory = Environment.CurrentDirectory;
 
@@ -170,7 +171,12 @@ internal static class Processor
         }
     }
 
-    static Process CreateClojureProcess(string installDir, string clojurMainDir, string[] args, Dictionary<string, string> env)
+    static Process CreateClojureProcess(
+        string installDir,
+        string clojurMainDir,
+        string[] args,
+        Dictionary<string, string> env,
+        string? runtimeConfigPath = null)
     {
         Process process = new()
         {
@@ -187,6 +193,11 @@ internal static class Processor
 
 
         process.StartInfo.ArgumentList.Add("exec");
+        if (runtimeConfigPath is not null)
+        {
+            process.StartInfo.ArgumentList.Add("--runtimeconfig");
+            process.StartInfo.ArgumentList.Add(runtimeConfigPath);
+        }
         process.StartInfo.ArgumentList.Add(Path.Join(clojurMainDir, $"{Resolver.ClojureMainFilename}.dll"));
 
         foreach (var arg in args)
