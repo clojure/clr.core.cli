@@ -185,9 +185,7 @@ internal class EnvironmentManager
 
     public static string? GetRuntimeConfigPath(string frameworksFile, string runtimeConfigFile, string runtimeConfigSourceFile, string clojureMainDirectory)
     {
-        List<string> frameworks = File.Exists(frameworksFile)
-            ? [.. File.ReadAllLines(frameworksFile).Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => f.Trim())]
-            : [];
+        List<string> frameworks = EnvironmentManager.GetFrameworks(frameworksFile);
 
         if (frameworks.Count == 0)
         {
@@ -235,6 +233,12 @@ internal class EnvironmentManager
             clojureMainPath = $"Error finding Clojure.Main: {ex.Message}";
         }
 
+        List<string> frameworks = GetFrameworks(FrameworksFile);
+
+        string frameworksText = frameworks.Count > 0
+            ? $"""{Environment.NewLine}frameworks   = {string.Join(',', frameworks)}{Environment.NewLine}runtimeconf  = {RuntimeConfigFile}"""
+            : string.Empty;
+
         return $"""
            version      = {Platform.Version}
            install_dir  = {InstallDir}
@@ -242,13 +246,22 @@ internal class EnvironmentManager
            config_paths = {string.Join(' ', ConfigPaths)}
            cache_dir    = {CacheDir}
            cp_file      = {CpFile}
-           clojure_main = {clojureMainPath}
+           clojure_main = {clojureMainPath}{frameworksText}
            """;
+    }
+
+    private static List<string> GetFrameworks(string frameworksFile)
+    {
+        return File.Exists(frameworksFile)
+            ? [.. File.ReadAllLines(frameworksFile).Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => f.Trim())]
+            : [];
     }
 
     public string GetDescribeMessage()
     {
         var pathVector = string.Join(' ', ConfigPaths.Select(p => p.Replace(@"\", @"\\")));
+        List<string> frameworks = GetFrameworks(FrameworksFile);
+
         return $$"""
           {:version {{Platform.Version}}
            :config-files [{{pathVector}}]
@@ -257,6 +270,7 @@ internal class EnvironmentManager
            :install-dir {{InstallDir.Replace(@"\", @"\\")}}
            :config-dir {{ConfigDir.Replace(@"\", @"\\")}}
            :cache-dir {{CacheDir.Replace(@"\", @"\\")}}
+           :clr-frameworks [{{string.Join(' ', frameworks.Select(f => f.Replace(@"\", @"\\")))}}]
            :force {{CliArgs.HasFlag("force")}}
            :repro {{CliArgs.HasFlag("repro")}}
            :main - aliases {{CliArgs.GetCommandAlias(EMode.Main)}}

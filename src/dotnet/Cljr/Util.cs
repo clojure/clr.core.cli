@@ -9,8 +9,8 @@ internal static class Util
     public static void PrintVersion() => Util.Print($"ClojureCLR CLI Version: {Platform.Version}");
 
     public static void PrintHelp() => Util.Print(
-        $$$"""
-       Version: {{{Platform.Version}}}
+        $$$$"""
+       Version: {{{{Platform.Version}}}}
 
        You use the Clojure tools('clj' or 'clojure') to run Clojure programs
        on the JVM, e.g.to start a REPL or invoke a specific function with data.
@@ -93,6 +93,16 @@ internal static class Util
         -X:deps prep              Prepare all unprepped libs in the dep tree
         -X:deps mvn-install Install a maven jar to the local repository cache
         -X:deps git-resolve-tags Resolve git coord tags to shas and update deps.edn
+
+        Normally, cljr invokes Clojure.Main with its default framework, Microsoft.NETCore.App.
+        If you want to use a different framework, you can specify it with the :clr/frameworks property in your deps.edn file.
+        For example:
+
+           {:paths ["src"]
+            :aliases {:web     {:clr/frameworks ["Microsoft.AspNetCore.App"]}
+                      :desktop {:clr/frameworks ["Microsoft.WindowsDesktop.App"]}}}
+
+       :clr/frameworks is CLR-only. JVM tools ignore unknown alias keys, or you can put it in deps-clr.edn.
 
        For more info, see:
         https://clojure.org/guides/deps_and_cli

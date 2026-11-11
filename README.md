@@ -55,7 +55,7 @@ This reference uses `clj` for REPL examples and `clojure` for non-REPL examples.
 `cljr` does not have this distinction (for now).  There is just `cljr`.
 
 The status of the primary commands and the command line options is detailed below.  
-In general terms, tools and are not supported yet.  Anything related to Maven or JVM is not supported.
+Anything related to Maven or JVM is not supported.
 Most other things are ready for testing.
 
 
@@ -116,6 +116,25 @@ For example, the JVM version may want to use Maven repos for dependencies, which
 However, we cannot just read-conditionalization the `deps.edn` file because read-conditionalization is not supported in EDN files.
 The workaround is that `cljr` will look for a file named `deps-clr.edn` first, then look for `deps.edn`.  This provides an override that `cljr` can see and the JVM tools will ignore.
 
+## .NET Frameworks
+
+Normally, `cljr` starts `Clojure.Main` using the .NET framework default for `Clojure.Main`, namely, `Microsoft.NETCore.App`.  If you wish to run with additional frameworks,
+you can specify those with a `:clr/frameworks` entry.  Here is an example `deps.edn`:
+
+```
+{:paths ["src"]
+ :aliases {:web     {:clr/frameworks ["Microsoft.AspNetCore.App"]}
+           :desktop {:clr/frameworks ["Microsoft.WindowsDesktop.App"]}}}
+```
+
+Running `cljr -M:web ...` would add `Microsoft.AspNetCore.App` as a shared framework, allowing you to execute `(assembly-load "Microsoft.AspNetCore")`, for example.
+Combined aliases add up: `cljr -M:web:desktop ... ` gets both frameworks added.
+
+`:clr/frameworks` is CLR-only. JVM tools ignore unknown alias keys, or you can put it in `deps-clr.edn`.
+
+## A note on -Sverbose
+
+Calling `cljr -Sverbose ...` might show incomplete information if this is the first time it has been run (either ever, or after a configuration change).   A second call will report correctly. (This is consistent with the JVM CLI.)
 
 ## Running tests
 
