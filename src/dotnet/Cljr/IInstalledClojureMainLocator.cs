@@ -8,9 +8,16 @@ internal class InstalledClojureMainData
     public Exception? Exception { get; set; } = null;
 }
 
+
+public enum ELocatorMode
+{
+    Global,
+    Versioned
+}
+
 // Interface for the DefaultClojureMainLocator class, which is responsible for locating the default Clojure main DLL.
 // Abstracted the interface for mocking in unit tests.
 internal interface IInstalledClojureMainLocator
 {
-    InstalledClojureMainData FindInstalledClojureMainDll();
+    InstalledClojureMainData FindInstalledClojureMainDll(ELocatorMode mode, string workingDirectory);
 }

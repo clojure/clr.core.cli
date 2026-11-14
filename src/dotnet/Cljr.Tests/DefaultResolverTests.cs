@@ -2,7 +2,7 @@
 
 namespace Cljr.Tests;
 
-public class ResolverTests : IDisposable
+public class DefaultResolverTests : IDisposable
 {
     // Path for temporary directory containing no files. (Will fail on containing Clojure.Main.dll).
     public string EmptyDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -22,15 +22,7 @@ public class ResolverTests : IDisposable
     // The path to the cache file for the tests. 
     public string TestCacheFilePath => Path.Combine(TestCacheFileDirectory, Resolver.ClojureMainDLLCacheFilename);
 
-
-
-
-
-    // For IDisposable support
-    private bool disposedValue;
-
-
-    public ResolverTests()
+    public DefaultResolverTests()
     {
         // Create the empty directory.
         Directory.CreateDirectory(EmptyDirectory);
@@ -44,7 +36,6 @@ public class ResolverTests : IDisposable
         // Create the temporary cache file directory.
         Directory.CreateDirectory(TestCacheFileDirectory);
     }
-
 
     [Fact]
     public void EnvVarCaseFailsOnNonexistentDirectory()
@@ -154,11 +145,9 @@ public class ResolverTests : IDisposable
 
 
 
-
-
     private IInstalledClojureMainLocator CreateFakeLocatorWithException()
     {
-        return FakeInstalledClojureLocator.CreateFakeInstalledClojureMainLocater(
+        return FakeInstalledClojureLocator.CreateFakeInstalledClojureMainLocator(
             clojureMainPath: OccupiedDirectory,
             timestamp: DateTime.UtcNow,
             exception: new Exception("Simulated exception from fake locator."));
@@ -166,14 +155,14 @@ public class ResolverTests : IDisposable
 
     private IInstalledClojureMainLocator CreateFakeLocatorWithValidData()
     {
-        return FakeInstalledClojureLocator.CreateFakeInstalledClojureMainLocater(
+        return FakeInstalledClojureLocator.CreateFakeInstalledClojureMainLocator(
             clojureMainPath: OccupiedDirectory,
             timestamp: OccupiedDllTimeStamp);
     }
 
     private IInstalledClojureMainLocator CreateFakeLocatorWithInvalidData()
     {
-        return FakeInstalledClojureLocator.CreateFakeInstalledClojureMainLocater(
+        return FakeInstalledClojureLocator.CreateFakeInstalledClojureMainLocator(
             clojureMainPath: EmptyDirectory,
             timestamp: DateTime.UtcNow - TimeSpan.FromDays(1000));
     }
@@ -181,7 +170,6 @@ public class ResolverTests : IDisposable
 
     /////////////////////////////////////////////
     // Cache file management
-
 
     private void DeleteCacheFile()
     {
@@ -199,7 +187,6 @@ public class ResolverTests : IDisposable
 
         File.WriteAllText(TestCacheFilePath, cacheContent);
     }
-
 
     private void WriteCacheFilePointingToBadDirectory()
     {
@@ -229,6 +216,8 @@ public class ResolverTests : IDisposable
 
     /////////////////////////////////////////////
     // Implementing IDisposable, standard pattern
+
+    private bool disposedValue;
 
     protected virtual void Dispose(bool disposing)
     {
