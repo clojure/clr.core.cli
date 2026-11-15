@@ -136,7 +136,7 @@ Combined aliases add up: `cljr -M:web:desktop ... ` gets both frameworks added.
 
 Normally, `cljr` invokes Clojure.Main using the `clojure.main` installed as a tool on your system.
 You can request a specific version of `Clojure.Main` by specifying the `:clr/clojure-version` property in your `deps.edn` or `deps-clr.edn` file.
-You can place this at the top level of your deps file:
+You can place this at the top level of your deps file (but `-T` and `-X:deps` will ignore it):
 
 ```
 :clr/clojure-version "1.12.6"

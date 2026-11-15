@@ -104,9 +104,9 @@ internal static class Util
 
        :clr/frameworks is CLR-only. JVM tools ignore unknown alias keys, or you can put it in deps-clr.edn.
 
-       Normally, cljr invokes Clojure.Main using the 'clojure.main' installed as a tool on your system. 
-       You can request a specific version of clojure.main by specifying the :clr/clojure-version property in your deps.edn  or deps-clr.edn file.
-       You can place this at the top level of your deps file:
+       Normally, cljr invokes Clojure.Main using the 'clojure.main' installed as a tool on your system.
+       You can request a specific version of clojure.main by specifying the :clr/clojure-version property in your deps.edn or deps-clr.edn file.
+       You can place this at the top level of your deps file ((but -T and -X:deps will ignore it):
        
            :clr/clojure-version "1.12.6"
 
@@ -114,9 +114,9 @@ internal static class Util
        
            {:aliases {:clj-1.12 {:clr/clojure-version "1.12.6"}}}
 
-       The last alias to set it wins.  Computing the classpath always uses `cljr`'s default `Clojure.Main`; only your program runs on the requested version.
+       The last alias to set it wins.  Computing the classpath always uses cljr's default Clojure.Main; only your program runs on the requested version.
 
-       Under -X/-T, there is a minimum version of ClojureCLR you cannot drop below.  Currently the floor is version 1.12.3-alpha3.  
+       Under -X/-T, there is a minimum version of ClojureCLR you cannot drop below.  Currently the floor is version 1.12.3-alpha3.
        Running -M or the REPL work with any version.
 
        The environment variable CLJR_CLOJURE_MAIN_DLL overrides any requested version.
