@@ -134,9 +134,9 @@ Combined aliases add up: `cljr -M:web:desktop ... ` gets both frameworks added.
 
 ## ClojureCLR version
 
-Normally, `cljr` invokes Clojure.Main using the `clojure.main` installed as a tool on your system. 
-You can request a specific version of `Clojure.Main`  by specifying the `:clr/clojure-version` property in your `deps.edn` or `deps-clr.edn` file.
-You can place this at the top level of your deps file (but `-T` and `-X:deps` will ignore it):
+Normally, `cljr` invokes Clojure.Main using the `clojure.main` installed as a tool on your system.
+You can request a specific version of `Clojure.Main` by specifying the `:clr/clojure-version` property in your `deps.edn` or `deps-clr.edn` file.
+You can place this at the top level of your deps file:
 
 ```
 :clr/clojure-version "1.12.6"
@@ -149,17 +149,15 @@ or it can be set per alias, e.g.
 
 This value can be any valid version of `Clojure.Main` on NuGet, including pre-release versions.
 
-The last alias to set it wins.  Tools and classpath computation run on `cljr`'s own default.
+The last alias to set it wins.  Computing the classpath always uses `cljr`'s default `Clojure.Main`; only your program runs on the requested version.
 
-Under `-X`/`-T`, there is a minimum version of ClojureCLR you cannot drop below.  Currently the floor is version 1.12.3-alpha3.  
-This is the minimum version that supports running `cljr` itself.
+Under `-X`/`-T`, there is a minimum version of ClojureCLR you cannot drop below.  Currently the floor is version 1.12.3-alpha3. Running `-M` or the REPL work with any version.
 
 The environment variable `CLJR_CLOJURE_MAIN_DLL` overrides any requested version.
 
-The  first use of version in project downloads it; later runs work offline.  Note that requesting a version does not change the version of `clojure.main` installed on your system.
+The first use of a version downloads it; later runs, in any project, work offline.  Note that requesting a version does not change the version of `clojure.main` installed on your system.
 
 `:clr/clojure-version` is CLR-only. JVM tools ignore unknown alias keys, or you can put it in `deps-clr.edn`.
-
 
 ## A note on -Sverbose
 
