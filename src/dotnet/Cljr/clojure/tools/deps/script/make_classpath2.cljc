@@ -42,6 +42,7 @@
    [nil "--jvm-file PATH" "JVM options file"]
    [nil "--main-file PATH" "Main options file"]
    #?(:cljr [nil "--frameworks-file PATH" ".NET frameworks file"])
+   #?(:cljr [nil "--clojure-version-file PATH" "Requested Clojure.Main version"])
    [nil "--manifest-file PATH" "Manifest list file"]
    [nil "--basis-file PATH" "Basis file"]
    [nil "--skip-cp" "Skip writing .cp files"]
@@ -138,9 +139,78 @@
       (when (#?(:clj .exists  :cljr .Exists) jf)
         (#?(:clj .delete :cljr .Delete) jf)))))
 
+;; Determine the alias that is the source of the :clr/clojure-version value
+;; Walk aliases in the order they were requested, keep the last one whose map has the key
+;; A picture might help.  Here are the relevant parts of basis file:
+;;
+;;  :basis-config {:project "deps.edn"
+;;                 :user    "~/.clojure/deps-clr.edn"
+;;                 :extra   {:aliases {:cli {:clr/clojure-version "1.12.5"}}}
+;;                 :args    nil
+;;                 :aliases [:old :other :new :cli]}          ; <- requested, in order
+;;  
+;;  :aliases {:old   {:clr/clojure-version "1.12.3-alpha3"}   ; <- every defined alias,
+;;            :other {:extra-paths ["y"]}                      ;    name -> definition
+;;            :new   {:clr/clojure-version "1.13.0-alpha8", :extra-paths ["x"]}
+;;            :cli   {:clr/clojure-version "1.12.5"}           ;    (from -Sdeps)
+;;            :test  {:extra-paths ["test"]}                   ;    (defined, not requested)
+;;            :deps  {:replace-deps {...}, ...}}               ;    (from the root deps.edn)
+;;  
+;;  :argmap {:clr/clojure-version "1.12.5", :extra-paths ["y" "x"]}
+;;  
+;;  :clr/clojure-version "1.12.6"                              ; <- the top-level value
+;;  
+;;  We have a value for :clr/clojure-version in :argmap.  But we don't know the source, so we must compute it.
+;;  The value of (:aliases (:basis-config basis)) is a vector of the aliases considered, in order.
+;;  For each alias in order -- :old, :other, :new, :cli -- we check if its map in (:aliases basis) has a value for :clr/clojure-version.
+;;  We want the last alias that has a value.  In our example:  :old - yes;  :other - no; :new - yes; :cli - yes.
+;;  So our answer is :cli.
+
+(defn determine-clr-version-source [basis]
+  (let [config-aliases (:aliases (:basis-config basis))
+        defining (filter #(contains? (get-in basis [:aliases %]) :clr/clojure-version) config-aliases)]
+    (last defining)))  
+
+(defn determine-clr-version-and-source [argmap-version argmap basis]
+  (cond
+    argmap-version
+    [argmap-version (str "alias " (determine-clr-version-source basis))]
+    
+    (and (not (contains? argmap :replace-deps))
+         (not (contains? argmap :deps))
+         (:clr/clojure-version basis))
+    [(:clr/clojure-version basis) "top-level"]
+     
+    :else
+    [nil nil]))
+    
+    
+(def ^:private modified-semver-pattern
+  (re-pattern
+   (str "^"
+        "([0-9]+)"                                 ; major  - We allow leading zeros, else should be (0|[1-9]\\d*)
+        "\\."
+        "([0-9]+)"                                 ; minor  - We allow leading zeros
+        "\\."
+        "([0-9]+)"                                 ; patch  - We allow leading zeros
+        "(?:-"                                        ; optional prelease indicated by hyphen
+          "(?:"
+            "(?:[0-9A-Za-z]+)"
+            "(?:[.-](?:[0-9A-Za-z]+))*"
+          ")"
+        ")?"
+        "(?:\\+"                                      ; optional metadata indicated by +
+          "[0-9A-Za-z.-]+"
+        ")?"
+        "\\z")))
+        
+(defn valid-version? [v]
+  (boolean (and (string? v) (re-matches modified-semver-pattern v))))
+  
+
 (defn run
   "Run make-classpath script. See -main for details."
-  [{:keys [cp-file jvm-file main-file frameworks-file basis-file manifest-file skip-cp tool-mode tool-name tool-aliases trace tree] :as opts}]
+  [{:keys [cp-file jvm-file main-file frameworks-file clojure-version-file basis-file manifest-file skip-cp tool-mode tool-name tool-aliases trace tree] :as opts}]
   #_(when-let [user-agent (some-> "clojure/install/useragent.txt" jio/resource slurp)]   ;;; CLR: Maven specific -- ignore
     (System/setProperty "aether.connector.userAgent" user-agent))  
   (let [opts' (cond-> opts
@@ -149,7 +219,12 @@
         {:keys [basis manifests], trace-log :trace} (run-core opts')
         {:keys [argmap libs classpath-roots]} basis
         {:keys [jvm-opts main-opts]} argmap
-        #?@(:cljr [{:clr/keys [frameworks]} argmap])]
+        #?@(:cljr [{:clr/keys [frameworks clojure-version]} argmap])
+        #?@(:cljr [[clr-version clr-version-source] (determine-clr-version-and-source clojure-version argmap basis)])]
+    #?(:cljr (when (and clr-version (not (valid-version? clr-version)))
+               (throw (ex-info
+                        (str "Invalid :clr/clojure-version " (pr-str clr-version) " from " clr-version-source) 
+                        {:clr/clojure-version clr-version :source clr-version-source}))))
     (when trace
       (spit "trace.edn" 
             (binding [*print-namespace-maps* false] (with-out-str (pprint/pprint trace-log)))
@@ -162,6 +237,8 @@
     (write-lines (seq jvm-opts) jvm-file)
     (write-lines (seq main-opts) main-file)  ;; FUTURE: add check to only do this if main-aliases were passed
     #?(:cljr (when frameworks-file (write-lines (seq frameworks) frameworks-file)))
+    #?(:cljr (when clojure-version-file 
+               (write-lines (if clr-version [clr-version clr-version-source] nil) clojure-version-file)))
     (write-lines manifests manifest-file)))
 
 (defn -main
@@ -177,6 +254,7 @@
     --jvm-file=path - jvm opts file to write
     --main-file=path - main opts file to write
     --frameworks-file=path - .NET frameworks (CLR only)
+    --clojure-version-file=path - requested Clojure.Main version (CLR only)
     --manifest-file=path - manifest list file to write
     --basis-file=path - basis file to write
     -Mmain-aliases - concatenated main-opt alias names

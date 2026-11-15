@@ -31,6 +31,7 @@ internal class EnvironmentManager
     public string JvmFile { get; private set; } = string.Empty;
     public string MainFile { get; private set; } = string.Empty;
     public string FrameworksFile { get; private set; } = string.Empty;
+    public string ClojureVersionFile { get; private set; } = string.Empty;
     public string RuntimeConfigFile { get; private set; } = string.Empty;
     public string RuntimeConfigSourceFile { get; private set; } = string.Empty;
     public string BasisFile { get; private set; } = string.Empty;
@@ -138,6 +139,7 @@ internal class EnvironmentManager
         BasisFile = Path.Join(CacheDir, $"{cacheKeyHash}.basis");
         ManifestFile = Path.Join(CacheDir, $"{cacheKeyHash}.manifest");
         FrameworksFile = Path.Join(CacheDir, $"{cacheKeyHash}.frameworks");
+        ClojureVersionFile = Path.Join(CacheDir, $"{cacheKeyHash}.clojure-version");
         RuntimeConfigFile = Path.Join(CacheDir, $"{cacheKeyHash}.runtimeconfig.json");
         RuntimeConfigSourceFile = Path.Join(CacheDir, $"{cacheKeyHash}.runtimeconfig.source");
 

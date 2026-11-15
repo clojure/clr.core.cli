@@ -51,16 +51,17 @@ internal static class Processor
                     args:
                     [
                         "-m", "clojure.tools.deps.script.make-classpath2",
-                "--install-dir", mgr.InstallDir,
-                "--config-user", mgr.ConfigUser,
-                "--config-project", mgr.ConfigProject,
-                "--basis-file", mgr.BasisFile,
-                "--cp-file", mgr.CpFile,
-                "--jvm-file", mgr.JvmFile,
-                "--main-file", mgr.MainFile,
-                "--manifest-file", mgr.ManifestFile,
-                "--frameworks-file", mgr.FrameworksFile,
-                ..toolsArgs
+                        "--install-dir", mgr.InstallDir,
+                        "--config-user", mgr.ConfigUser,
+                        "--config-project", mgr.ConfigProject,
+                        "--basis-file", mgr.BasisFile,
+                        "--cp-file", mgr.CpFile,
+                        "--jvm-file", mgr.JvmFile,
+                        "--main-file", mgr.MainFile,
+                        "--manifest-file", mgr.ManifestFile,
+                        "--frameworks-file", mgr.FrameworksFile,
+                        "--clojure-version-file", mgr.ClojureVersionFile,
+                        ..toolsArgs
                     ],
                     env: new()
                     {
