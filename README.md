@@ -132,6 +132,35 @@ Combined aliases add up: `cljr -M:web:desktop ... ` gets both frameworks added.
 
 `:clr/frameworks` is CLR-only. JVM tools ignore unknown alias keys, or you can put it in `deps-clr.edn`.
 
+## ClojureCLR version
+
+Normally, `cljr` invokes Clojure.Main using the `clojure.main` installed as a tool on your system. 
+You can request a specific version of `Clojure.Main`  by specifying the `:clr/clojure-version` property in your `deps.edn` or `deps-clr.edn` file.
+You can place this at the top level of your deps file (but `-T` and `-X:deps` will ignore it):
+
+```
+:clr/clojure-version "1.12.6"
+```
+or it can be set per alias, e.g.
+
+```
+{:aliases {:clj-1.12 {:clr/clojure-version "1.12.6"}}}
+```
+
+This value can be any valid version of `Clojure.Main` on NuGet, including pre-release versions.
+
+The last alias to set it wins.  Tools and classpath computation run on `cljr`'s own default.
+
+Under `-X`/`-T`, there is a minimum version of ClojureCLR you cannot drop below.  Currently the floor is version 1.12.3-alpha3.  
+This is the minimum version that supports running `cljr` itself.
+
+The environment variable `CLJR_CLOJURE_MAIN_DLL` overrides any requested version.
+
+The  first use of version in project downloads it; later runs work offline.  Note that requesting a version does not change the version of `clojure.main` installed on your system.
+
+`:clr/clojure-version` is CLR-only. JVM tools ignore unknown alias keys, or you can put it in `deps-clr.edn`.
+
+
 ## A note on -Sverbose
 
 Calling `cljr -Sverbose ...` might show incomplete information if this is the first time it has been run (either ever, or after a configuration change).   A second call will report correctly. (This is consistent with the JVM CLI.)
