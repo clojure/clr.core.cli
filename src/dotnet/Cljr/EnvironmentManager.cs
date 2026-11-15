@@ -25,6 +25,7 @@ internal class EnvironmentManager
     public List<string> ConfigPaths { get; } = [];
 
     public bool IsStaleClasspath { get; private set; } = false;
+    public bool IsVerbose { get; private set; } = false;
 
 
     public string CpFile { get; private set; } = string.Empty;
@@ -159,6 +160,7 @@ internal class EnvironmentManager
         else if (ConfigPaths.ToList().Exists(p => IsNewerFile(p, CpFile)))
             IsStaleClasspath = true;
 
+        IsVerbose = cliArgs.HasFlag("verbose");
     }
 
     // Determine user config directory; 
@@ -180,9 +182,9 @@ internal class EnvironmentManager
         return Path.Join(homeConfig, ".clojure");
     }
 
-    public string? GetRuntimeConfigPath()
+    public string? GetRuntimeConfigPath(string clojureMainDirectory)
     {
-        return GetRuntimeConfigPath(FrameworksFile, RuntimeConfigFile, RuntimeConfigSourceFile, DefaultClojureMainPath.Value);
+        return GetRuntimeConfigPath(FrameworksFile, RuntimeConfigFile, RuntimeConfigSourceFile, clojureMainDirectory);
     }
 
     public static string? GetRuntimeConfigPath(string frameworksFile, string runtimeConfigFile, string runtimeConfigSourceFile, string clojureMainDirectory)
@@ -238,17 +240,22 @@ internal class EnvironmentManager
         List<string> frameworks = GetFrameworks(FrameworksFile);
 
         string frameworksText = frameworks.Count > 0
-            ? $"""{Environment.NewLine}frameworks   = {string.Join(',', frameworks)}{Environment.NewLine}runtimeconf  = {RuntimeConfigFile}"""
+            ? $"""{Environment.NewLine}frameworks      = {string.Join(',', frameworks)}{Environment.NewLine}runtimeconf     = {RuntimeConfigFile}"""
             : string.Empty;
 
+        string versionText = GetClojureMainVersionInfo() is ClojureMainVersionInfo versionInfo
+            ? $"""{Environment.NewLine}clojure_version = {versionInfo.Version} (from {versionInfo.Source})"""
+            : $"""{Environment.NewLine}clojure_version = (default)""";
+
+
         return $"""
-           version      = {Platform.Version}
-           install_dir  = {InstallDir}
-           config_dir   = {ConfigDir}
-           config_paths = {string.Join(' ', ConfigPaths)}
-           cache_dir    = {CacheDir}
-           cp_file      = {CpFile}
-           clojure_main = {clojureMainPath}{frameworksText}
+           version         = {Platform.Version}
+           install_dir     = {InstallDir}
+           config_dir      = {ConfigDir}
+           config_paths    = {string.Join(' ', ConfigPaths)}
+           cache_dir       = {CacheDir}
+           cp_file         = {CpFile}
+           default_main    = {clojureMainPath}{frameworksText}{versionText}
            """;
     }
 
@@ -259,25 +266,51 @@ internal class EnvironmentManager
             : [];
     }
 
+
+    internal class ClojureMainVersionInfo
+    {
+        public string Version { get; init; } = string.Empty;
+        public string Source { get; init; } = string.Empty;
+    }
+
+    internal ClojureMainVersionInfo? GetClojureMainVersionInfo()
+    {
+        if (!File.Exists(ClojureVersionFile))
+            return null;
+        var lines = File.ReadAllLines(ClojureVersionFile);
+        if (lines.Length < 2)
+            return null;
+        return new ClojureMainVersionInfo
+        {
+            Version = lines[0],
+            Source = lines[1]
+        };
+    }
+
     public string GetDescribeMessage()
     {
-        var pathVector = string.Join(' ', ConfigPaths.Select(p => p.Replace(@"\", @"\\")));
+        var pathVector = string.Join(' ', ConfigPaths.Select(p => $"\"{p.Replace(@"\", @"\\")}\""));
         List<string> frameworks = GetFrameworks(FrameworksFile);
 
+        string versionText = GetClojureMainVersionInfo() is ClojureMainVersionInfo versionInfo
+            ? $"\"{versionInfo.Version}\""
+            : "nil";
+
         return $$"""
-          {:version {{Platform.Version}}
+          {:version "{{Platform.Version}}"
            :config-files [{{pathVector}}]
-           :config-user {{ConfigUser.Replace(@"\", @"\\")}}
-           :config-project {{ConfigProject.Replace(@"\", @"\\")}}
-           :install-dir {{InstallDir.Replace(@"\", @"\\")}}
-           :config-dir {{ConfigDir.Replace(@"\", @"\\")}}
-           :cache-dir {{CacheDir.Replace(@"\", @"\\")}}
-           :clr-frameworks [{{string.Join(' ', frameworks.Select(f => f.Replace(@"\", @"\\")))}}]
-           :force {{CliArgs.HasFlag("force")}}
-           :repro {{CliArgs.HasFlag("repro")}}
-           :main - aliases {{CliArgs.GetCommandAlias(EMode.Main)}}
-           :repl - aliases {{CliArgs.GetCommandAlias(EMode.Repl)}}
-           :exec - aliases {{CliArgs.GetCommandAlias(EMode.Exec)}}
+           :config-user "{{ConfigUser.Replace(@"\", @"\\")}}"
+           :config-project "{{ConfigProject.Replace(@"\", @"\\")}}"
+           :install-dir "{{InstallDir.Replace(@"\", @"\\")}}"
+           :config-dir "{{ConfigDir.Replace(@"\", @"\\")}}"
+           :cache-dir "{{CacheDir.Replace(@"\", @"\\")}}"
+           :clr-frameworks [{{string.Join(' ', frameworks.Select(f => $"\"{f.Replace(@"\", @"\\")}\""))}}]
+           :clr-clojure-version {{versionText}}
+           :force {{CliArgs.HasFlag("force").ToString().ToLower()}}
+           :repro {{CliArgs.HasFlag("repro").ToString().ToLower()}}
+           :main-aliases "{{CliArgs.GetCommandAlias(EMode.Main)}}"
+           :repl-aliases "{{CliArgs.GetCommandAlias(EMode.Repl)}}"
+           :exec-aliases "{{CliArgs.GetCommandAlias(EMode.Exec)}}"
           }
           """;
     }

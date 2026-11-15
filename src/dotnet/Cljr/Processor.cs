@@ -89,6 +89,55 @@ internal static class Processor
         return new ProcessResult { ExitCode = 0 };
     }
 
+    internal static string ComputeClojureMainDll(EnvironmentManager mgr, bool checkFloor)
+    {
+        var versionInfo = mgr.GetClojureMainVersionInfo();
+
+        if (versionInfo is not null)
+        {
+            var requestedVersion = versionInfo.Version;
+            var source = versionInfo.Source;
+
+            string envVar = Environment.GetEnvironmentVariable(Resolver.CljrClojureMainDllEnvVar) ?? string.Empty;
+
+            if (checkFloor && String.IsNullOrEmpty(envVar) && ClojureVersion.IsBelowExecFloor(requestedVersion))
+            {
+                throw new ArgumentException($"-X/-T need ClojureCLR {ClojureVersion.ExecFloor} or later with this cljr; :clr/clojure-version is {requestedVersion} (from {source}). Use -M or a new version.");
+            }
+
+            Resolver resolver = new();
+
+            try
+            {
+                Resolver.VersionedClojureMainData result = resolver.FindVersionedClojureMainDll(
+                    envVar,
+                    mgr.ConfigDir,
+                    requestedVersion,
+                    new InstalledClojureMainLocatorImpl(),
+                    new ClojureMainVersionDownloaderImpl());
+
+                if (mgr.IsVerbose)
+                {
+                    if (result.Step == Resolver.EStep.EnvVarOverride)
+                        Util.Print($"CLJR_CLOJURE_MAIN_DLL set; :clr/clojure-version = {requestedVersion} ignored.");
+
+                    Util.Print($"clojure_main = {result.ClojureMainDirectory} (step: {result.Step})");
+                }
+
+                return result.ClojureMainDirectory;
+            }
+            catch (Resolver.FailedDownloadException ex)
+            {
+                throw new Resolver.FailedDownloadException($"Could not get ClojureCLR {requestedVersion} (:clr/clojure-version from {source}):{Environment.NewLine}{ex.ErrorOutput}", ex.ExitCode, ex.ErrorOutput);
+            }
+        }
+        else
+        {
+            // No version is requested, use the default.
+            return mgr.DefaultClojureMainPath.Value;
+        }
+    }
+
     public static ProcessResult RunExecOrToolProcess(EnvironmentManager mgr)
     {
         // & $JavaCmd -XX:-OmitStackTraceInFastThrow @JavaOpts @JvmCacheOpts @JvmOpts "-Dclojure.basis=$BasisFile" -classpath "$CP;$InstallDir/exec.jar" clojure.main -m clojure.run.exec @ClojureArgs
@@ -97,10 +146,13 @@ internal static class Processor
 
         try
         {
-            var runtimeConfigPath = mgr.GetRuntimeConfigPath();
+            string clojureMainDll = ComputeClojureMainDll(mgr, checkFloor: true);
+
+            var runtimeConfigPath = mgr.GetRuntimeConfigPath(clojureMainDll);
+
             using var process = CreateClojureProcess(
                 mgr.InstallDir,
-                mgr.DefaultClojureMainPath.Value,
+                clojureMainDll,
                 args:
                 [
                     "-m", "clojure.run.exec",
@@ -109,7 +161,7 @@ internal static class Processor
                 env: new()
                 {
                     ["CLOJURE_LOAD_PATH"] =
-                        $"{mgr.GetClasspath()}{Path.PathSeparator}{mgr.InstallDir}", // TODO -- what is this? need to get the equivalent of exec.jar on the load path
+                        $"{mgr.GetClasspath()}{Path.PathSeparator}{mgr.InstallDir}",
                     ["clojure.basis"] = mgr.BasisFile,
                     ["clojure.cli.install_dir"] = mgr.InstallDir,
                 },
@@ -119,6 +171,10 @@ internal static class Processor
             process.WaitForExit();
 
             return new ProcessResult { ExitCode = process.ExitCode };
+        }
+        catch (Resolver.FailedDownloadException ex)
+        {
+            return new ProcessResult { ExitCode = ex.ExitCode, Exception = ex };
         }
         catch (Exception ex)
         {
@@ -143,11 +199,13 @@ internal static class Processor
 
         try
         {
-            var runtimeConfigPath = mgr.GetRuntimeConfigPath();
+            string clojureMainDll = ComputeClojureMainDll(mgr, checkFloor: false);
+
+            var runtimeConfigPath = mgr.GetRuntimeConfigPath(clojureMainDll);
 
             using var process = CreateClojureProcess(
                 mgr.InstallDir,
-                mgr.DefaultClojureMainPath.Value,
+                clojureMainDll,
                 args:
                 [
                     ..mainCacheOpts,
@@ -155,8 +213,8 @@ internal static class Processor
                 ],
                 env: new()
                 {
-                    ["CLOJURE_LOAD_PATH"] = mgr.GetClasspath(), // TODO -- what is this?
-                    ["clojure.basis"] = mgr.BasisFile, // will this do -Dclojure.basis=$BasisFile  ?
+                    ["CLOJURE_LOAD_PATH"] = mgr.GetClasspath(),
+                    ["clojure.basis"] = mgr.BasisFile,
                 },
                 runtimeConfigPath);
 
@@ -165,6 +223,10 @@ internal static class Processor
             process.Start();
             process.WaitForExit();
             return new ProcessResult { ExitCode = process.ExitCode };
+        }
+        catch (Resolver.FailedDownloadException ex)
+        {
+            return new ProcessResult { ExitCode = ex.ExitCode, Exception = ex };
         }
         catch (Exception ex)
         {
