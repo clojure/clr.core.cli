@@ -151,7 +151,7 @@ This value can be any valid version of `Clojure.Main` on NuGet, including pre-re
 
 The last alias to set it wins.  Computing the classpath always uses `cljr`'s default `Clojure.Main`; only your program runs on the requested version.
 
-Under `-X`/`-T`, there is a minimum version of ClojureCLR you cannot drop below.  Currently the floor is version 1.12.3-alpha3. Running `-M` or the REPL work with any version.
+Under `-X`/`-T`, there is a minimum version of ClojureCLR you cannot drop below.  Currently the floor is version 1.12.3-alpha3. `-M` or the REPL work with any version.
 
 The environment variable `CLJR_CLOJURE_MAIN_DLL` overrides any requested version.
 
