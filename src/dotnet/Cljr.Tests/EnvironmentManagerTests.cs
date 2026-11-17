@@ -280,6 +280,50 @@ public class EnvironmentManagerTests : IDisposable
         Assert.Contains(SourceRuntimeConfigJsonFile, ex.Message);
     }
 
+    // Checking for stale maniest content is a bit tricky, so we have a dedicated test for it.
+
+    [Fact]
+    public void IsManifestContentStaleDetectsStaleContent()
+    {
+        // Arrange
+        string manifestFile = Path.Combine(BaseDirectory, "test.manifest");
+        string cpFile = Path.Combine(BaseDirectory, "test.cp");
+        string file1 = Path.Combine(BaseDirectory, "file1.txt");
+        string file2 = Path.Combine(BaseDirectory, "file2.txt");
+
+
+        File.WriteAllText(cpFile, "classpath content");
+        // Set the last write time of the classpath file to a known value.
+        DateTime cpFileWriteTimeUtc = StandardBaseTime;
+        File.SetLastWriteTimeUtc(cpFile, cpFileWriteTimeUtc);
+
+        // No manifest file means not stale
+        Assert.False(EnvironmentManager.IsManifestContentStale(manifestFile, cpFileWriteTimeUtc));
+
+        // Create a manifest file with some content.
+        File.WriteAllText(manifestFile, $"{file1}\n\n{file2}\n    ");
+
+        // Write file1.txt, older than the classpath file.
+        File.WriteAllText(file1, "file1 content");
+        File.SetLastWriteTimeUtc(file1, cpFileWriteTimeUtc - TimeSpan.FromMinutes(1));
+
+        // A missing file means stale
+        Assert.True(EnvironmentManager.IsManifestContentStale(manifestFile, cpFileWriteTimeUtc));
+
+        // Write file2.txt, older than the classpath file.
+        File.WriteAllText(file2, "file2 content");
+        File.SetLastWriteTimeUtc(file2, cpFileWriteTimeUtc - TimeSpan.FromMinutes(1));
+
+        // Both files exist and are older than the classpath file, so the manifest content is not stale.
+        Assert.False(EnvironmentManager.IsManifestContentStale(manifestFile, cpFileWriteTimeUtc));
+
+        // Now, make one of the files referenced in the manifest newer than the classpath file.
+        File.SetLastWriteTimeUtc(Path.Combine(BaseDirectory, "file2.txt"), cpFileWriteTimeUtc + TimeSpan.FromMinutes(1));
+
+        // Now, the manifest content should be considered stale.
+        Assert.True(EnvironmentManager.IsManifestContentStale(manifestFile, cpFileWriteTimeUtc));
+    }
+
 
     /////////////////////////////////////////////
     // Implementing IDisposable, standard pattern

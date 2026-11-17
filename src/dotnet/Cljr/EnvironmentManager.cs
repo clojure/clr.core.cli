@@ -159,8 +159,31 @@ internal class EnvironmentManager
             IsStaleClasspath = true;
         else if (ConfigPaths.ToList().Exists(p => IsNewerFile(p, CpFile)))
             IsStaleClasspath = true;
+        else if (IsManifestContentStale(ManifestFile, File.GetLastWriteTimeUtc(CpFile)))
+            IsStaleClasspath = true;
 
         IsVerbose = cliArgs.HasFlag("verbose");
+    }
+
+    // Determine if any of the files it references are stale compared to the classpath file.
+    internal static bool IsManifestContentStale(string manifestFile, DateTime cpFileWriteTimeUtc)
+    {
+        if (!File.Exists(manifestFile))
+            return false;
+
+        var manifestLines = File.ReadAllLines(manifestFile);
+        foreach (var line in manifestLines)
+        {
+            var trimmedLine = line.Trim();
+            if (string.IsNullOrWhiteSpace(trimmedLine))
+                continue;
+            if (!File.Exists(trimmedLine))
+                return true;
+            var fileWriteTimeUtc = File.GetLastWriteTimeUtc(trimmedLine);
+            if (fileWriteTimeUtc > cpFileWriteTimeUtc)
+                return true;
+        }
+        return false;
     }
 
     // Determine user config directory; 
